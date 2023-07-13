@@ -19,6 +19,10 @@ from tdw.scene_data.region_bounds import RegionBounds
 from tdw.release.pypi import PyPi
 from tdw_image_dataset.image_position import ImagePosition
 
+### Added by Yudi ###
+import pandas as pd
+### Added by Yudi ###
+
 # The required version of TDW.
 REQUIRED_TDW_VERSION: str = "1.9.0"
 RNG: np.random.RandomState = np.random.RandomState(0)
@@ -486,6 +490,32 @@ class ImageDataset(Controller):
         # Generate images from the cached spatial data.
         t0 = time()
         train = 0
+
+        ### Added by Yudi ###
+        # log object size?
+        image_id = 0
+        image_id_list = []
+        object_id_list = []
+
+        avatar_pos_x_list = []
+        avatar_pos_y_list = []
+        avatar_pos_z_list = []
+
+        camera_rot_x_list = []
+        camera_rot_y_list = []
+        camera_rot_z_list = []
+        camera_rot_w_list = []
+        
+        object_pos_x_list = []
+        object_pos_y_list = []
+        object_pos_z_list = []
+
+        object_rot_x_list = []
+        object_rot_y_list = []
+        object_rot_z_list = []
+        object_rot_w_list = []
+        ### Added by Yudi ###
+
         for p in image_positions:
             # Teleport the avatar.
             # Rotate the avatar's camera.
@@ -535,7 +565,58 @@ class ImageDataset(Controller):
             train += 1
             file_index += 1
             image_count += 1
+
+            ### Added by Yudi ###
+            image_id += 1
+            image_id_list.append(image_id)
+            object_id_list.append(o_id)
+
+            avatar_pos_x_list.append(p.avatar_position['x'])
+            avatar_pos_y_list.append(p.avatar_position['y'])
+            avatar_pos_z_list.append(p.avatar_position['z'])
+
+            camera_rot_x_list.append(p.camera_rotation['x'])
+            camera_rot_y_list.append(p.camera_rotation['y'])
+            camera_rot_z_list.append(p.camera_rotation['z'])
+            camera_rot_w_list.append(p.camera_rotation['w'])
+            
+            object_pos_x_list.append(p.object_position['x'])
+            object_pos_y_list.append(p.object_position['y'])
+            object_pos_z_list.append(p.object_position['z'])
+
+            object_rot_x_list.append(p.object_rotation['x'])
+            object_rot_y_list.append(p.object_rotation['y'])
+            object_rot_z_list.append(p.object_rotation['z'])
+            object_rot_w_list.append(p.object_rotation['w'])
+            ### Added by Yudi ###
         t1 = time()
+
+        ### Added by Yudi ###
+        # save the meta_data
+        save_df = pd.DataFrame.from_dict(
+            {
+                'record': record.name,
+                'wnid': wnid,
+                'image_id': image_id_list,
+                'object_id': object_id_list,
+                'avatar_pos_x': avatar_pos_x_list,
+                'avatar_pos_y': avatar_pos_y_list,
+                'avatar_pos_z': avatar_pos_z_list,
+                'camera_rot_x': camera_rot_x_list,
+                'camera_rot_y': camera_rot_y_list,
+                'camera_rot_z': camera_rot_z_list,
+                'camera_rot_w': camera_rot_w_list,
+                'object_pos_x': object_pos_x_list,
+                'object_pos_y': object_pos_y_list,
+                'object_pos_z': object_pos_z_list,
+                'object_rot_x': object_rot_x_list,
+                'object_rot_y': object_rot_y_list,
+                'object_rot_z': object_rot_z_list,
+                'object_rot_w': object_rot_w_list,
+            }
+        )
+        save_df.to_csv(os.path.join('..', f'{record}_meta_data.csv'))
+        ### Added by Yudi ###
 
         # Stop sending images.
         # Destroy the object.
