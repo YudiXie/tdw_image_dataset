@@ -616,7 +616,7 @@ class ImageDataset(Controller):
             }
         )
 
-        csv_path = self.output_directory.joinpath('image_meta', f'{wnid}_{record}_meta_data.csv')
+        csv_path = self.output_directory.joinpath('image_meta', f'{wnid}_{record.name}_meta_data.csv')
         save_df.to_csv(str(csv_path.resolve()))
         ### Added by Yudi ###
 
