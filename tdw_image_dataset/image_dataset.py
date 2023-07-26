@@ -615,7 +615,9 @@ class ImageDataset(Controller):
                 'object_rot_w': object_rot_w_list,
             }
         )
-        save_df.to_csv(os.path.join('..', f'{record}_meta_data.csv'))
+
+        csv_path = self.output_directory.joinpath('image_meta', f'{wnid}_{record}_meta_data.csv')
+        save_df.to_csv(str(csv_path.resolve()))
         ### Added by Yudi ###
 
         # Stop sending images.
