@@ -596,6 +596,7 @@ class ImageDataset(Controller):
         save_df = pd.DataFrame.from_dict(
             {
                 'record': record.name,
+                'wcategory': record.wcategory,
                 'wnid': wnid,
                 'image_id': image_id_list,
                 'object_id': object_id_list,
