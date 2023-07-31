@@ -62,7 +62,9 @@ class ImageDataset(Controller):
                  train: int = 1300000,
                  val: int = 50000,
                  library: str = "models_core.json",
-                 random_seed: int = 0):
+                 random_seed: int = 0,
+                 subset_wnids: Optional[List[str]] = None,
+                 ):
         """
         :param output_directory: The path to the root output directory.
         :param port: The port used to connect to the build.
@@ -85,6 +87,7 @@ class ImageDataset(Controller):
         :param val: The number of val images.
         :param library: The path to the library records file.
         :param random_seed: The random seed.
+        :param subset_wnids: create a subset only use these wnid categories.
         """
 
         global RNG
@@ -162,6 +165,8 @@ class ImageDataset(Controller):
         The number of val images.
         """
         self.val: int = val
+
+        self.subset_wnids = subset_wnids
 
         assert 0 < max_height <= 1.0, f"Invalid max height: {max_height}"
         assert 0 < occlusion <= 1.0, f"Invalid occlusion threshold: {occlusion}"
@@ -306,12 +311,20 @@ class ImageDataset(Controller):
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(self.get_add_scene(scene_name))
 
-        # Fetch the WordNet IDs.
-        wnids = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
-        # Remove any wnids that don't have valid models.
-        wnids = [w for w in wnids if len(
-            [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-             if not r.do_not_use]) > 0]
+        if self.subset_wnids is None:
+            # Fetch the WordNet IDs.
+            wnids = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
+            # Remove any wnids that don't have valid models.
+            wnids = [w for w in wnids if len(
+                [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
+                if not r.do_not_use]) > 0]
+        else:
+            wnids = self.subset_wnids
+            for w in wnids:
+                # check if any models is usable
+                assert len([r for r in 
+                            Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w) 
+                            if not r.do_not_use]) > 0, f"ID: {w} do not have usable models"
 
         # Set the number of train and val images per wnid.
         num_train = self.train / len(wnids)

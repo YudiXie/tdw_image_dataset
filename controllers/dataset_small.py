@@ -7,6 +7,16 @@ Generate a dataset that is of same size as the HvM dataset
 """
 
 if __name__ == "__main__":
+    subset_ids = [
+        'n02774152', # 'bag, handbag, pocketbook, purse’, 12 records
+        'n02933112', # 'cabinet’, 33 records
+        'n03001627', # 'chair’, 25 records
+        'n03761084', # 'microwave oven’, 12 records
+        'n03880531', # 'pan’, 12 records
+        'n04256520', # ‘sofa’, 14 records
+        'n04379243', # ‘table’, 20 records
+        'n04461879', # ‘toy’, 12 records
+    ]
     c = ImageDataset(train=4608, val=1152, 
                      library="models_core.json", 
                      materials=False, 
@@ -14,5 +24,7 @@ if __name__ == "__main__":
                      do_zip=True,
                      random_seed=0,
                      output_directory=Path.home().joinpath("tdw_image_dataset_small"),
-                     launch_build=True)
+                     launch_build=True,
+                     subset_ids=subset_ids,
+                     )
     c.run(scene_name="building_site")
