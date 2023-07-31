@@ -25,6 +25,6 @@ if __name__ == "__main__":
                      random_seed=0,
                      output_directory=Path.home().joinpath("tdw_image_dataset_small"),
                      launch_build=True,
-                     subset_ids=subset_ids,
+                     subset_wnids=subset_ids,
                      )
     c.run(scene_name="building_site")
