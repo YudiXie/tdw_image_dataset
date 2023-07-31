@@ -9,9 +9,9 @@ setup(
     description='Generate synthetic image datasets with TDW',
     long_description=readme,
     long_description_content_type='text/markdown',
-    url='https://github.com/alters-mit/tdw_image_dataset',
+    url='https://github.com/YudiXie/tdw_image_dataset',
     author_email='alters@mit.edu',
-    author='Seth Alter',
+    author='Yudi Xie, Seth Alter',
     license='MIT',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
