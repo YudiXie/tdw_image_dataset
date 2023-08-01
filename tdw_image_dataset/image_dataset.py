@@ -112,6 +112,12 @@ class ImageDataset(Controller):
         The path to the metadata file.
         """
         self.metadata_path: Path = self.output_directory.joinpath("metadata.txt")
+        """:field
+        The path to the image metadata file.
+        """
+        self.images_meta_directory: Path = self.output_directory.joinpath("images_meta")
+        if not self.images_meta_directory.exists():
+            self.images_meta_directory.mkdir(parents=True)
 
         """:field
         The width of the build screen in pixels.
@@ -630,7 +636,7 @@ class ImageDataset(Controller):
             }
         )
 
-        csv_path = self.output_directory.joinpath('image_meta', f'{wnid}_{record.name}_meta_data.csv')
+        csv_path = self.images_meta_directory.joinpath(f'{wnid}_{record.name}_meta_data.csv')
         save_df.to_csv(str(csv_path.resolve()))
         ### Added by Yudi ###
 
