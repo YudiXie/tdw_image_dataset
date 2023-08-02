@@ -384,6 +384,14 @@ class ImageDataset(Controller):
             pbar.update(1)
         pbar.close()
 
+        ### Added by Yudi ###
+        # aggregate the image meta files
+        df_csv_concat = pd.concat(
+            [pd.read_csv(str(p), index_col=0) for p in self.images_meta_directory.iterdir()], 
+            ignore_index=True)
+        df_csv_concat.to_csv(str(self.output_directory.joinpath('images_meta.csv').resolve()))
+        ### Added by Yudi ###
+
         # Add the end time to the metadata file.
         metadata = json.loads(self.metadata_path.read_text())
         end_time = datetime.now().strftime("%H:%M %d.%m.%y")
