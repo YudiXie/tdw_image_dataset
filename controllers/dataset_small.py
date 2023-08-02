@@ -17,12 +17,8 @@ if __name__ == "__main__":
         'n04379243', # ‘table’, 20 records
         'n04461879', # ‘toy’, 12 records
     ]
-    c = ImageDataset(train=4608, val=1152, 
-                     library="models_core.json", 
-                     materials=False, 
+    c = ImageDataset(train=4608, val=1152,
                      hdri=False,
-                     do_zip=True,
-                     random_seed=0,
                      output_directory=Path.home().joinpath("tdw_image_dataset_small"),
                      launch_build=True,
                      subset_wnids=subset_ids,
