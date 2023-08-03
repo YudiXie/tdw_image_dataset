@@ -520,9 +520,9 @@ class ImageDataset(Controller):
 
         ### Added by Yudi ###
         # log object size?
-        image_id = 0
-        image_id_list = []
-        object_id_list = []
+        assert self.overwrite, "log image meta only when overwriting"
+
+        file_index_list = []
 
         avatar_pos_x_list = []
         avatar_pos_y_list = []
@@ -594,9 +594,7 @@ class ImageDataset(Controller):
             image_count += 1
 
             ### Added by Yudi ###
-            image_id += 1
-            image_id_list.append(image_id)
-            object_id_list.append(o_id)
+            file_index_list.append(file_index - 1)
 
             avatar_pos_x_list.append(p.avatar_position['x'])
             avatar_pos_y_list.append(p.avatar_position['y'])
@@ -622,11 +620,10 @@ class ImageDataset(Controller):
         # save the meta_data
         save_df = pd.DataFrame.from_dict(
             {
-                'record': record.name,
-                'wcategory': record.wcategory,
                 'wnid': wnid,
-                'image_id': image_id_list,
-                'object_id': object_id_list,
+                'record_wcategory': record.wcategory,
+                'record_name': record.name,
+                'file_index': file_index_list,
                 'avatar_pos_x': avatar_pos_x_list,
                 'avatar_pos_y': avatar_pos_y_list,
                 'avatar_pos_z': avatar_pos_z_list,
