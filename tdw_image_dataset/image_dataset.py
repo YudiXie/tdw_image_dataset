@@ -594,7 +594,7 @@ class ImageDataset(Controller):
             image_count += 1
 
             ### Added by Yudi ###
-            image_file_name_list.append(f"img_{record.name}_{(file_index - 1):04d}")
+            image_file_name_list.append(f'img_{record.name}_{(file_index - 1):04d}.jpg')
 
             avatar_pos_x_list.append(p.avatar_position['x'])
             avatar_pos_y_list.append(p.avatar_position['y'])
