@@ -522,7 +522,7 @@ class ImageDataset(Controller):
         # log object size?
         assert self.overwrite, "log image meta only when overwriting"
 
-        file_index_list = []
+        image_file_name_list = []
 
         avatar_pos_x_list = []
         avatar_pos_y_list = []
@@ -594,7 +594,7 @@ class ImageDataset(Controller):
             image_count += 1
 
             ### Added by Yudi ###
-            file_index_list.append(file_index - 1)
+            image_file_name_list.append(f"img_{record.name}_{(file_index - 1):04d}")
 
             avatar_pos_x_list.append(p.avatar_position['x'])
             avatar_pos_y_list.append(p.avatar_position['y'])
@@ -623,7 +623,7 @@ class ImageDataset(Controller):
                 'wnid': wnid,
                 'record_wcategory': record.wcategory,
                 'record_name': record.name,
-                'file_index': file_index_list,
+                'image_filename': image_file_name_list,
                 'avatar_pos_x': avatar_pos_x_list,
                 'avatar_pos_y': avatar_pos_y_list,
                 'avatar_pos_z': avatar_pos_z_list,
