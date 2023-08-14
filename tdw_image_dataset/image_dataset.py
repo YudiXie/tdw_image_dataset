@@ -12,7 +12,7 @@ import numpy as np
 from tqdm import tqdm
 from tdw.controller import Controller
 from tdw.tdw_utils import TDWUtils
-from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version
+from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version, ScreenPosition
 from tdw.librarian import ModelLibrarian, MaterialLibrarian, HDRISkyboxLibrarian, ModelRecord, HDRISkyboxRecord
 from tdw.scene_data.scene_bounds import SceneBounds
 from tdw.scene_data.region_bounds import RegionBounds
@@ -524,6 +524,9 @@ class ImageDataset(Controller):
 
         image_file_name_list = []
 
+        ty_list = []
+        tz_list = []
+
         avatar_pos_x_list = []
         avatar_pos_y_list = []
         avatar_pos_z_list = []
@@ -582,6 +585,14 @@ class ImageDataset(Controller):
                     commands.append(command)
                 commands.append({"$type": "rotate_hdri_skybox_by",
                                  "angle": RNG.uniform(0, 360)})
+            
+            ### Added by Yudi ###
+            # instruct the build to send screen position of the object
+            # the position is likely the bottom center of the object
+            commands.extend([{"$type": "send_screen_positions", 
+                              "position_ids": [0], 
+                              "positions": [p.object_position]}])
+            ### Added by Yudi ###
 
             resp = self.communicate(commands)
 
@@ -594,7 +605,19 @@ class ImageDataset(Controller):
             image_count += 1
 
             ### Added by Yudi ###
+            # get the screen position of the object
+            for i in range(len(resp) - 1):
+                r_id = OutputData.get_data_type_id(resp[i])
+                if r_id == "scre":
+                    scene_positions = ScreenPosition(resp[i])
+                    ty, tz, neg_x = scene_positions.get_screen()
+                    ty -= self.screen_width / 2
+                    tz -= self.screen_height / 2
+
             image_file_name_list.append(f'img_{record.name}_{(file_index - 1):04d}.jpg')
+
+            ty_list.append(ty)
+            tz_list.append(tz)
 
             avatar_pos_x_list.append(p.avatar_position['x'])
             avatar_pos_y_list.append(p.avatar_position['y'])
@@ -624,6 +647,8 @@ class ImageDataset(Controller):
                 'record_wcategory': record.wcategory,
                 'record_name': record.name,
                 'image_filename': image_file_name_list,
+                'ty': ty_list,
+                'tz': tz_list,
                 'avatar_pos_x': avatar_pos_x_list,
                 'avatar_pos_y': avatar_pos_y_list,
                 'avatar_pos_z': avatar_pos_z_list,
