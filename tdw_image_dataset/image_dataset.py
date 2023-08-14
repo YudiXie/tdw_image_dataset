@@ -526,6 +526,7 @@ class ImageDataset(Controller):
 
         ty_list = []
         tz_list = []
+        neg_x_list = []
 
         avatar_pos_x_list = []
         avatar_pos_y_list = []
@@ -616,8 +617,9 @@ class ImageDataset(Controller):
 
             image_file_name_list.append(f'img_{record.name}_{(file_index - 1):04d}.jpg')
 
-            ty_list.append(ty)
-            tz_list.append(tz)
+            ty_list.append(ty)  # up-down position, center of image is 0, unit in pixels
+            tz_list.append(tz)  # left-right position, center of image is 0, unit in pixels
+            neg_x_list.append(neg_x)  # depth of object, unit in 3D space in TDW
 
             avatar_pos_x_list.append(p.avatar_position['x'])
             avatar_pos_y_list.append(p.avatar_position['y'])
@@ -649,6 +651,7 @@ class ImageDataset(Controller):
                 'image_filename': image_file_name_list,
                 'ty': ty_list,
                 'tz': tz_list,
+                'neg_x': neg_x_list,
                 'avatar_pos_x': avatar_pos_x_list,
                 'avatar_pos_y': avatar_pos_y_list,
                 'avatar_pos_z': avatar_pos_z_list,
