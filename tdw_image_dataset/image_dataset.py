@@ -358,6 +358,9 @@ class ImageDataset(Controller):
             records = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
             records = [r for r in records if not r.do_not_use]
 
+            # Remove models that have multiple objects
+            records = [r for r in records if r.name not in ['b02_bag', 'lantern_2010', 'b04_bottle_max']]
+
             # Get the train and val counts.
             train_count = [len(a) for a in np.array_split(
                 np.arange(num_train), len(records))][0]
