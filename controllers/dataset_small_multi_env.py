@@ -5,9 +5,10 @@ from tdw_image_dataset.image_dataset import ImageDataset
 Generate a dataset that is of same size as the HvM dataset
 4608 training iamges and 1152 testing images
 only have 8 categories
-single scene
+multiple scenes
 """
 
+# TODO: haven't been tested
 if __name__ == "__main__":
     subset_ids = [
         'n02774152', # 'bag, handbag, pocketbook, purse’, 12 records
@@ -19,11 +20,30 @@ if __name__ == "__main__":
         'n04379243', # ‘table’, 20 records
         'n04461879', # ‘toy’, 12 records
     ]
-    c = ImageDataset(train=4608, val=1152,
+
+    scenes = ["building_site",
+              "lava_field",
+              "iceland_beach",
+              "ruin",
+              "dead_grotto",
+              "abandoned_factory"]
+    train = int(4608 / len(scenes))
+    val = int(1152 / len(scenes))
+    
+    c = ImageDataset(new=True,
+                     train=train,
+                     val=val,
                      hdri=False,
+                     overwrite=False,
                      output_directory=Path.home().joinpath("tdw_image_dataset_small"),
                      launch_build=True,
                      subset_wnids=subset_ids,
-                     do_zip=True,
+                     do_zip=False,
                      )
-    c.run(scene_name="building_site")
+
+    # Generate a "partial" dataset per scene.
+    for scene, i in zip(scenes, range(len(scenes))):
+        print(f"{scene}\t{i + 1}/{len(scenes)}")
+        c.run(scene_name=scene)
+    # Terminate the build.
+    c.communicate({"$type": "terminate"})
