@@ -64,6 +64,7 @@ class ImageDataset(Controller):
                  library: str = "models_core.json",
                  random_seed: int = 0,
                  subset_wnids: Optional[List[str]] = None,
+                 offset: float = 0.0,
                  ):
         """
         :param output_directory: The path to the root output directory.
@@ -171,6 +172,10 @@ class ImageDataset(Controller):
         The number of val images.
         """
         self.val: int = val
+        """:field
+        Restrict the agent from offset to the edge of the region.
+        """
+        self.offset = offset
 
         self.subset_wnids = subset_wnids
 
@@ -795,7 +800,7 @@ class ImageDataset(Controller):
         """
 
         # Get a random position for the avatar.
-        a_p = self.get_avatar_position(region=region)
+        a_p = self.get_avatar_position(region=region, offset=self.offset)
         # Teleport the object.
         commands = self.get_object_position_commands(o_id=o_id, avatar_position=a_p, region=region)
         # Convert the avatar's position to a Vector3.
@@ -842,16 +847,29 @@ class ImageDataset(Controller):
                                         camera_rotation=cam_rot)
 
     @staticmethod
-    def get_avatar_position(region: RegionBounds) -> np.array:
+    def get_avatar_position(region: RegionBounds, offset: float = 0.0) -> np.array:
         """
         :param region: The scene region bounds.
+        :param offset: Restrict the agent from offset to the edge of the region.
 
         :return: The position of the avatar for the next image as a numpy array.
         """
-
-        return np.array([RNG.uniform(region.x_min, region.x_max),
-                         RNG.uniform(0.4, region.y_max),
-                         RNG.uniform(region.z_min, region.z_max)])
+        if offset > 0.0:
+            assert region.x_max - region.x_min > 2 * offset, "region x too small"
+            x_min = region.x_min + offset
+            x_max = region.x_max - offset
+            assert region.z_max - region.z_min > 2 * offset, "region z too small"
+            z_min = region.z_min + offset
+            z_max = region.z_max - offset
+            assert region.y_max > 0.4 + offset, "region y too small"
+            y_max = region.y_max - offset
+            return np.array([RNG.uniform(x_min, x_max),
+                             RNG.uniform(0.4, y_max),
+                             RNG.uniform(z_min, z_max)])
+        else:
+            return np.array([RNG.uniform(region.x_min, region.x_max),
+                             RNG.uniform(0.4, region.y_max),
+                             RNG.uniform(region.z_min, region.z_max)])
 
     def get_object_position_commands(self, o_id: int, avatar_position: np.array, region: RegionBounds) -> List[dict]:
         """

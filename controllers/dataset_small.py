@@ -25,5 +25,6 @@ if __name__ == "__main__":
                      launch_build=True,
                      subset_wnids=subset_ids,
                      do_zip=True,
+                     offset=3.0,
                      )
     c.run(scene_name="building_site")
