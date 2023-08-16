@@ -861,8 +861,9 @@ class ImageDataset(Controller):
             assert region.z_max - region.z_min > 2 * offset, "region z too small"
             z_min = region.z_min + offset
             z_max = region.z_max - offset
-            assert region.y_max > 0.4 + offset, "region y too small"
-            y_max = region.y_max - offset
+            # assert region.y_max > 0.4 + offset, "region y too small"
+            # y_max = region.y_max - offset
+            y_max = region.y_max
             return np.array([RNG.uniform(x_min, x_max),
                              RNG.uniform(0.4, y_max),
                              RNG.uniform(z_min, z_max)])
