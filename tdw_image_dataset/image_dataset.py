@@ -12,7 +12,7 @@ import numpy as np
 from tqdm import tqdm
 from tdw.controller import Controller
 from tdw.tdw_utils import TDWUtils
-from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version, ScreenPosition
+from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version, ScreenPosition, LocalTransforms
 from tdw.librarian import ModelLibrarian, MaterialLibrarian, HDRISkyboxLibrarian, ModelRecord, HDRISkyboxRecord
 from tdw.scene_data.scene_bounds import SceneBounds
 from tdw.scene_data.region_bounds import RegionBounds
@@ -528,6 +528,10 @@ class ImageDataset(Controller):
         tz_list = []
         neg_x_list = []
 
+        euler_1_list = []
+        euler_2_list = []
+        euler_3_list = []
+
         avatar_pos_x_list = []
         avatar_pos_y_list = []
         avatar_pos_z_list = []
@@ -586,14 +590,6 @@ class ImageDataset(Controller):
                     commands.append(command)
                 commands.append({"$type": "rotate_hdri_skybox_by",
                                  "angle": RNG.uniform(0, 360)})
-            
-            ### Added by Yudi ###
-            # instruct the build to send screen position of the object
-            # the position is likely the bottom center of the object
-            commands.extend([{"$type": "send_screen_positions", 
-                              "position_ids": [0], 
-                              "positions": [p.object_position]}])
-            ### Added by Yudi ###
 
             resp = self.communicate(commands)
 
@@ -606,20 +602,50 @@ class ImageDataset(Controller):
             image_count += 1
 
             ### Added by Yudi ###
+            # instruct the build to send screen position of the object
+            # the position is likely the bottom center of the object
+            # parent the object to the avatar, and send rotation of the object relative to the camera
+            resp = self.communicate(
+                [{"$type": "send_screen_positions",
+                  "position_ids": [0],
+                  "positions": [p.object_position]},
+                 {"$type": "parent_object_to_avatar", 
+                  "id": o_id, "avatar_id": ImageDataset.AVATAR_ID, 
+                  "sensor": True},
+                 {"$type": "send_local_transforms", 
+                  "ids": [o_id], "frequency": "once"},
+                  ])
+            
+            # unparent the object, to ensure object don't move when the avatar moves
+            self.communicate([{"$type": "unparent_object", "id": o_id},])
+
+            has_scre, has_ltra = False, False
             # get the screen position of the object
             for i in range(len(resp) - 1):
                 r_id = OutputData.get_data_type_id(resp[i])
                 if r_id == "scre":
+                    has_scre = True
                     scene_positions = ScreenPosition(resp[i])
                     ty, tz, neg_x = scene_positions.get_screen()
                     ty -= self.screen_width / 2
                     tz -= self.screen_height / 2
+                if r_id == "ltra":
+                    has_ltra = True
+                    obj_ltransforms = LocalTransforms(resp[i])
+                    assert obj_ltransforms.get_id(0) == o_id, "object id mismatch"
+                    # get the rotation of the object in the screen space
+                    relative_euler = obj_ltransforms.get_euler_angles(0)
+            assert has_scre and has_ltra, "missing screen position or local transform"
 
             image_file_name_list.append(f'img_{record.name}_{(file_index - 1):04d}.jpg')
 
             ty_list.append(ty)  # up-down position, center of image is 0, unit in pixels
             tz_list.append(tz)  # left-right position, center of image is 0, unit in pixels
             neg_x_list.append(neg_x)  # depth of object, unit in 3D space in TDW
+
+            euler_1_list.append(relative_euler[0])
+            euler_2_list.append(relative_euler[1])
+            euler_3_list.append(relative_euler[2])
 
             avatar_pos_x_list.append(p.avatar_position['x'])
             avatar_pos_y_list.append(p.avatar_position['y'])
@@ -639,6 +665,7 @@ class ImageDataset(Controller):
             object_rot_z_list.append(p.object_rotation['z'])
             object_rot_w_list.append(p.object_rotation['w'])
             ### Added by Yudi ###
+            
         t1 = time()
 
         ### Added by Yudi ###
@@ -652,6 +679,9 @@ class ImageDataset(Controller):
                 'ty': ty_list,
                 'tz': tz_list,
                 'neg_x': neg_x_list,
+                'euler_1': euler_1_list,
+                'euler_2': euler_2_list,
+                'euler_3': euler_3_list,
                 'avatar_pos_x': avatar_pos_x_list,
                 'avatar_pos_y': avatar_pos_y_list,
                 'avatar_pos_z': avatar_pos_z_list,
