@@ -945,6 +945,8 @@ class ImageDataset(Controller):
             # Iterate over all the files in directory
             for folderName, subfolders, filenames in os.walk(str(self.output_directory.resolve())):
                 for filename in filenames:
+                    if filename == '.DS_Store':
+                        continue
                     # create complete filepath of file in directory
                     file_path = os.path.join(folderName, filename)
                     # Add file to zip
