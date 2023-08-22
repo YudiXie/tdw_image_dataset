@@ -35,7 +35,7 @@ if __name__ == "__main__":
                      val=val,
                      hdri=False,
                      overwrite=False,
-                     output_directory=Path.home().joinpath("tdw_image_dataset_small"),
+                     output_directory=Path.home().joinpath("tdw_image_dataset_small_multi_env"),
                      launch_build=True,
                      subset_wnids=subset_ids,
                      do_zip=False,

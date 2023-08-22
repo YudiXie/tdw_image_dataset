@@ -89,6 +89,7 @@ class ImageDataset(Controller):
         :param library: The path to the library records file.
         :param random_seed: The random seed.
         :param subset_wnids: create a subset only use these wnid categories.
+        :param offset: Restrict the agent from offset to the edge of the region.
         """
 
         global RNG
