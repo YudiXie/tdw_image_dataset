@@ -86,7 +86,10 @@ class ImageDataset(Controller):
         :param occlusion: The occlusion threshold. Lower value = slower FPS, better composition. Must be between 0 and 1.
         :param less_dark: If True, there will be more daylight exterior skyboxes (requires hdri == True)
         :param id_pass: If True, send and save the _id pass.
-        :param overwrite: If True, overwrite existing images.
+        :param overwrite: If True, overwrite existing images in each wnid, start saving images in each wnid from 0.
+            if False, start indexing images in each wnid after the highest index saved in folder, 
+            currently used when multiple scenes are used to generate a dataset. But this is not optimal,
+            because it confuses the resume and multi-scence genreation.
         :param do_zip: If True, zip the directory at the end.
         :param train: The number of train images.
         :param val: The number of val images.
@@ -532,10 +535,12 @@ class ImageDataset(Controller):
 
         # Generate images from the cached spatial data.
         t0 = time()
-        train = 0
+        # how many images have been generated for this record
+        # in one scence, in this particulare run 
+        # (note that this is not optimal for resume, because previous run might have generated some images but stopped)
+        scene_record_img_count_this_run = 0
 
         ### Added by Yudi ###
-        # log object size?
         assert self.overwrite, "log image meta only when overwriting"
 
         image_file_name_list = []
@@ -610,10 +615,10 @@ class ImageDataset(Controller):
             resp = self.communicate(commands)
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, record, file_index, wnid, train, train_count))
+            t = Thread(target=self.save_image, args=(resp, record, file_index, wnid, scene_record_img_count_this_run, train_count))
             t.daemon = True
             t.start()
-            train += 1
+            scene_record_img_count_this_run += 1
             file_index += 1
 
             ### Added by Yudi ###
@@ -761,7 +766,7 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, record: ModelRecord, image_count: int, wnid: str, train: int, train_count: int) -> None:
+    def save_image(self, resp, record: ModelRecord, image_count: int, wnid: str, scene_record_img_count: int, train_count: int) -> None:
         """
         Save an image.
 
@@ -769,12 +774,12 @@ class ImageDataset(Controller):
         :param record: The model record.
         :param image_count: The image count.
         :param wnid: The wnid.
-        :param train: Number of train images so far.
-        :param train_count: Total number of train images to generate.
+        :param scene_record_img_count: Number of images generated for this scence and this record so far.
+        :param train_count: Total number of train images to generate for this scence and this record.
         """
 
         # Get the directory.
-        directory: Path = self.images_directory.joinpath("train" if train < train_count else "val").joinpath(wnid)
+        directory: Path = self.images_directory.joinpath("train" if scene_record_img_count < train_count else "val").joinpath(wnid)
         if directory.exists():
             # Try to make the directories. Due to threading, they might already be made.
             try:
