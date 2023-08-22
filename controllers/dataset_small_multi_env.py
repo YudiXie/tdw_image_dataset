@@ -30,8 +30,7 @@ if __name__ == "__main__":
     train = int(4608 / len(scenes))
     val = int(1152 / len(scenes))
     
-    c = ImageDataset(new=True,
-                     train=train,
+    c = ImageDataset(train=train,
                      val=val,
                      hdri=False,
                      overwrite=False,
@@ -47,3 +46,8 @@ if __name__ == "__main__":
         c.run(scene_name=scene)
     # Terminate the build.
     c.communicate({"$type": "terminate"})
+
+
+    # # Zip.
+    # ImageDataset.zip_images(Path(args.dir))
+

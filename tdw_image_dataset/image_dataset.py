@@ -71,7 +71,10 @@ class ImageDataset(Controller):
         :param port: The port used to connect to the build.
         :param launch_build: If True, automatically launch the build. Always set this to False on a Linux server.
         :param materials: If True, set random visual materials for each sub-mesh of each object.
-        :param new: If True, clear the list of models that have already been used.
+        :param new: If True, clear the list of models that have already been used in the scene. 
+            If False, continue processing records where the previous dataset left off.
+            eg. previously finished processing x records, there might be some images of the x + 1 record that have been processed previously.
+            then new=False, then start from x+1 record. Whether to oeverwrite the images of x+1 record depends on overwrite flag.
         :param screen_width: The screen width of the build in pixels.
         :param screen_height: The screen height of the build in pixels.
         :param output_scale: Scale the images by this factor before saving to disk.
@@ -346,7 +349,7 @@ class ImageDataset(Controller):
         pbar = tqdm(total=len(wnids))
 
         # If this is a new dataset, remove the previous list of completed models.
-        done_models_path: Path = self.output_directory.joinpath("processed_records.txt")
+        done_models_path: Path = self.output_directory.joinpath(f"{scene_name}_processed_records.txt")
         if self.new and done_models_path.exists():
             done_models_path.unlink()
 
@@ -449,13 +452,11 @@ class ImageDataset(Controller):
 
         :param record: The model record.
         :param scene_bounds: The bounds of the scene.
-        :param train_count: Number of train images.
-        :param val_count: Number of val images.
+        :param train_count: Number of train images for this model in one scene.
+        :param val_count: Number of val images for this model in one scene.
         :param wnid: The wnid of the record.
         :return The time elapsed.
         """
-
-        image_count = 0
 
         # Get the filename index. If we shouldn't overwrite any images, start after the last image.
         if not self.overwrite:
@@ -608,7 +609,6 @@ class ImageDataset(Controller):
             t.start()
             train += 1
             file_index += 1
-            image_count += 1
 
             ### Added by Yudi ###
             # instruct the build to send screen position of the object
