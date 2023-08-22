@@ -35,7 +35,9 @@ if __name__ == "__main__":
                      val=val,
                      do_zip=False,
                      library=args.library,
-                     output_directory=args.dir)
+                     output_directory=args.dir,
+                     terminate_build=False,
+                     )
 
     # Generate a "partial" dataset per scene.
     for scene, i in zip(scenes, range(len(scenes))):

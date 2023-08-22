@@ -38,6 +38,7 @@ if __name__ == "__main__":
                      launch_build=True,
                      subset_wnids=subset_ids,
                      do_zip=False,
+                     terminate_build=False,
                      )
 
     # Generate a "partial" dataset per scene.

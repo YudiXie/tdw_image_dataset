@@ -65,6 +65,7 @@ class ImageDataset(Controller):
                  random_seed: int = 0,
                  subset_wnids: Optional[List[str]] = None,
                  offset: float = 0.0,
+                 terminate_build: bool = True,
                  ):
         """
         :param output_directory: The path to the root output directory.
@@ -93,6 +94,7 @@ class ImageDataset(Controller):
         :param random_seed: The random seed.
         :param subset_wnids: create a subset only use these wnid categories.
         :param offset: Restrict the agent from offset to the edge of the region.
+        :param terminate_build: If True, terminate the build when one scene is done.
         """
 
         global RNG
@@ -180,6 +182,10 @@ class ImageDataset(Controller):
         Restrict the agent from offset to the edge of the region.
         """
         self.offset = offset
+        """:field
+        If True, terminate the build when one scene is done.
+        """
+        self.terminate_build = terminate_build
 
         self.subset_wnids = subset_wnids
 
@@ -414,7 +420,7 @@ class ImageDataset(Controller):
         self.metadata_path.write_text(json.dumps(metadata, sort_keys=True, indent=4))
 
         # Terminate the build.
-        if self.overwrite:
+        if self.terminate_build:
             self.communicate({"$type": "terminate"})
         # Zip up the images.
         if self.do_zip:
