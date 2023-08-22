@@ -24,8 +24,7 @@ if __name__ == "__main__":
               "abandoned_factory"]
     train = int(1300000 / len(scenes))
     val = int(50000 / len(scenes))
-    c = ImageDataset(new=True,
-                     clamp_rotation=True,
+    c = ImageDataset(clamp_rotation=True,
                      less_dark=True,
                      hdri=True,
                      overwrite=False,
