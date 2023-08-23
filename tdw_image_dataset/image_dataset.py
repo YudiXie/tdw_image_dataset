@@ -543,8 +543,6 @@ class ImageDataset(Controller):
         scene_record_img_count_this_run = 0
 
         ### Added by Yudi ###
-        assert self.overwrite, "log image meta only when overwriting"
-
         image_file_name_list = []
 
         ty_list = []
