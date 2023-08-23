@@ -10,6 +10,7 @@ multiple scenes
 
 # TODO: haven't been tested
 if __name__ == "__main__":
+    output_dir = Path.home().joinpath("tdw_image_dataset_small_multi_env")
     subset_ids = [
         'n02774152', # 'bag, handbag, pocketbook, purse’, 12 records
         'n02933112', # 'cabinet’, 33 records
@@ -34,7 +35,7 @@ if __name__ == "__main__":
                      val=val,
                      hdri=False,
                      overwrite=False,
-                     output_directory=Path.home().joinpath("tdw_image_dataset_small_multi_env"),
+                     output_directory=output_dir,
                      launch_build=True,
                      subset_wnids=subset_ids,
                      do_zip=False,
@@ -48,7 +49,5 @@ if __name__ == "__main__":
     # Terminate the build.
     c.communicate({"$type": "terminate"})
 
-
-    # # Zip.
-    # ImageDataset.zip_images(Path(args.dir))
-
+    # Zip.
+    c.zip_images()

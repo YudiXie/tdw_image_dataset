@@ -45,5 +45,6 @@ if __name__ == "__main__":
     # Terminate the build.
     c.communicate({"$type": "terminate"})
 
+    # potentially this is a bug
     # Zip.
     ImageDataset.zip_images(Path(args.dir))
