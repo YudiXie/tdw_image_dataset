@@ -191,6 +191,7 @@ class ImageDataset(Controller):
         self.terminate_build = terminate_build
 
         self.subset_wnids = subset_wnids
+        self.current_scene = ''
 
         assert 0 < max_height <= 1.0, f"Invalid max height: {max_height}"
         assert 0 < occlusion <= 1.0, f"Invalid occlusion threshold: {occlusion}"
@@ -245,18 +246,19 @@ class ImageDataset(Controller):
                     if skybox.location != "interior" and skybox.sun_elevation >= 145:
                         self.skyboxes.append(skybox)
 
-    def initialize_scene(self, scene_command) -> SceneBounds:
+    def initialize_scene(self, scene_name) -> SceneBounds:
         """
         Initialize the scene.
 
-        :param scene_command: The command to load the scene.
+        :param scene_name: str, The name of the scene.
 
         :return: The [`SceneBounds`](https://github.com/threedworld-mit/tdw/blob/master/Documentation/python/scene_bounds.md) of the scene.
         """
 
         # Initialize the scene.
+        self.current_scene = scene_name
         # Add the avatar.
-        commands = [scene_command,
+        commands = [self.get_add_scene(scene_name),
                     {"$type": "create_avatar",
                      "type": "A_Img_Caps_Kinematic",
                      "id": ImageDataset.AVATAR_ID}]
@@ -333,7 +335,7 @@ class ImageDataset(Controller):
         self.generate_metadata(scene_name=scene_name)
 
         # Initialize the scene.
-        scene_bounds: SceneBounds = self.initialize_scene(self.get_add_scene(scene_name))
+        scene_bounds: SceneBounds = self.initialize_scene(scene_name)
 
         if self.subset_wnids is None:
             # Fetch the WordNet IDs.
@@ -692,6 +694,7 @@ class ImageDataset(Controller):
         # save the meta_data
         save_df = pd.DataFrame.from_dict(
             {
+                'scene_name': self.current_scene,
                 'wnid': wnid,
                 'record_wcategory': record.wcategory,
                 'record_name': record.name,
@@ -719,7 +722,7 @@ class ImageDataset(Controller):
             }
         )
 
-        csv_path = self.images_meta_directory.joinpath(f'{wnid}_{record.name}_meta_data.csv')
+        csv_path = self.images_meta_directory.joinpath(f'{wnid}_{record.name}_{self.current_scene}_meta_data.csv')
         save_df.to_csv(str(csv_path.resolve()))
         ### Added by Yudi ###
 
