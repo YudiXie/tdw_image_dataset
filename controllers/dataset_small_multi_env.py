@@ -27,7 +27,8 @@ if __name__ == "__main__":
               "iceland_beach",
               "ruin",
               "dead_grotto",
-              "abandoned_factory"]
+              "savanna_6km"]
+    
     train = int(4608 / len(scenes))
     val = int(1152 / len(scenes))
     
