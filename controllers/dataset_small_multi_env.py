@@ -22,12 +22,13 @@ if __name__ == "__main__":
         'n04461879', # ‘toy’, 12 records
     ]
 
-    scenes = ["building_site",
+    scenes = ["suburb_scene_2018",
+              "building_site",
               "lava_field",
               "iceland_beach",
               "ruin",
               "dead_grotto",
-              "savanna_6km"]
+              ]
     
     train = int(4608 / len(scenes))
     val = int(1152 / len(scenes))
