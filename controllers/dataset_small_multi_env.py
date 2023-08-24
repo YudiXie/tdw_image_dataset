@@ -34,7 +34,6 @@ if __name__ == "__main__":
     c = ImageDataset(train=train,
                      val=val,
                      hdri=False,
-                     overwrite=False,
                      output_directory=output_dir,
                      launch_build=True,
                      subset_wnids=subset_ids,

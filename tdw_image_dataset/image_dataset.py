@@ -46,7 +46,6 @@ class ImageDataset(Controller):
                  port: int = 1071,
                  launch_build: bool = False,
                  materials: bool = False,
-                 new: bool = False,
                  screen_width: int = 256,
                  screen_height: int = 256,
                  output_scale: float = 1,
@@ -57,7 +56,6 @@ class ImageDataset(Controller):
                  occlusion: float = 0.45,
                  less_dark: bool = True,
                  id_pass: bool = False,
-                 overwrite: bool = True,
                  do_zip: bool = True,
                  train: int = 1300000,
                  val: int = 50000,
@@ -72,10 +70,6 @@ class ImageDataset(Controller):
         :param port: The port used to connect to the build.
         :param launch_build: If True, automatically launch the build. Always set this to False on a Linux server.
         :param materials: If True, set random visual materials for each sub-mesh of each object.
-        :param new: If True, clear the list of models that have already been used in the scene. 
-            If False, continue processing records where the previous dataset left off.
-            eg. previously finished processing x records, there might be some images of the x + 1 record that have been processed previously.
-            then new=False, then start from x+1 record. Whether to oeverwrite the images of x+1 record depends on overwrite flag.
         :param screen_width: The screen width of the build in pixels.
         :param screen_height: The screen height of the build in pixels.
         :param output_scale: Scale the images by this factor before saving to disk.
@@ -86,10 +80,6 @@ class ImageDataset(Controller):
         :param occlusion: The occlusion threshold. Lower value = slower FPS, better composition. Must be between 0 and 1.
         :param less_dark: If True, there will be more daylight exterior skyboxes (requires hdri == True)
         :param id_pass: If True, send and save the _id pass.
-        :param overwrite: If True, overwrite existing images in each wnid, start saving images in each wnid from 0.
-            if False, start indexing images in each wnid after the highest index saved in folder, 
-            currently used when multiple scenes are used to generate a dataset. But this is not optimal,
-            because it confuses the resume and multi-scence genreation.
         :param do_zip: If True, zip the directory at the end.
         :param train: The number of train images.
         :param val: The number of val images.
@@ -166,10 +156,6 @@ class ImageDataset(Controller):
         """
         self.id_pass: bool = id_pass
         """:field
-        If True, overwrite existing images.
-        """
-        self.overwrite: bool = overwrite
-        """:field
         If True, zip the directory at the end.
         """
         self.do_zip: bool = do_zip
@@ -208,10 +194,6 @@ class ImageDataset(Controller):
         Cached initial (canonical) rotations per model.
         """
         self.initial_rotations: Dict[str, Dict[str, float]] = dict()
-        """:field
-        If True, clear the list of models that have already been used.
-        """
-        self.new: bool = new
         """:field
         If True, set random visual materials for each sub-mesh of each object.
         """
@@ -359,11 +341,7 @@ class ImageDataset(Controller):
         # Create the progress bar.
         pbar = tqdm(total=len(wnids))
 
-        # If this is a new dataset, remove the previous list of completed models.
         done_models_path: Path = self.output_directory.joinpath(f"{scene_name}_processed_records.txt")
-        if self.new and done_models_path.exists():
-            done_models_path.unlink()
-
         # Get a list of models that have already been processed.
         processed_model_names: List[str] = []
         if done_models_path.exists():
@@ -469,24 +447,8 @@ class ImageDataset(Controller):
         :return The time elapsed.
         """
 
-        # Get the filename index. If we shouldn't overwrite any images, start after the last image.
-        if not self.overwrite:
-            # Check if any images exist.
-            wnid_dir = self.images_directory.joinpath(f"train/{wnid}")
-            if wnid_dir.exists():
-                max_file_index = -1
-                for image in wnid_dir.iterdir():
-                    if not image.is_file() or image.suffix != ".jpg" \
-                            or not image.stem.startswith("img_") or image.stem[4:-5] != record.name:
-                        continue
-                    image_index = int(image.stem[-4:])
-                    if image_index > max_file_index:
-                        max_file_index = image_index
-                file_index = max_file_index + 1
-            else:
-                file_index = 0
-        else:
-            file_index = 0
+        # the index of images generated for this model in this scene
+        image_count = 0
 
         image_positions: List[ImagePosition] = []
         o_id = self.get_unique_id()
@@ -537,10 +499,6 @@ class ImageDataset(Controller):
 
         # Generate images from the cached spatial data.
         t0 = time()
-        # how many images have been generated for this record
-        # in one scence, in this particulare run 
-        # (note that this is not optimal for resume, because previous run might have generated some images but stopped)
-        scene_record_img_count_this_run = 0
 
         ### Added by Yudi ###
         image_file_name_list = []
@@ -615,11 +573,10 @@ class ImageDataset(Controller):
             resp = self.communicate(commands)
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, record, self.current_scene, file_index, wnid, scene_record_img_count_this_run, train_count))
+            t = Thread(target=self.save_image, args=(resp, record, self.current_scene, image_count, wnid, train_count))
             t.daemon = True
             t.start()
-            scene_record_img_count_this_run += 1
-            file_index += 1
+            image_count += 1
 
             ### Added by Yudi ###
             # instruct the build to send screen position of the object
@@ -657,7 +614,7 @@ class ImageDataset(Controller):
                     relative_euler = obj_ltransforms.get_euler_angles(0)
             assert has_scre and has_ltra, "missing screen position or local transform"
 
-            image_file_name_list.append(f'img_{record.name}_{self.current_scene}_{(file_index - 1):04d}.jpg')
+            image_file_name_list.append(f'img_{record.name}_{self.current_scene}_{(image_count - 1):04d}.jpg')
 
             ty_list.append(ty)  # up-down position, center of image is 0, unit in pixels
             tz_list.append(tz)  # left-right position, center of image is 0, unit in pixels
@@ -767,7 +724,7 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, record: ModelRecord, scene_name: str, image_count: int, wnid: str, scene_record_img_count: int, train_count: int) -> None:
+    def save_image(self, resp, record: ModelRecord, scene_name: str, image_count: int, wnid: str, train_count: int) -> None:
         """
         Save an image.
 
@@ -775,12 +732,11 @@ class ImageDataset(Controller):
         :param record: The model record.
         :param image_count: The image count.
         :param wnid: The wnid.
-        :param scene_record_img_count: Number of images generated for this scence and this record so far.
         :param train_count: Total number of train images to generate for this scence and this record.
         """
 
         # Get the directory.
-        directory: Path = self.images_directory.joinpath("train" if scene_record_img_count < train_count else "val").joinpath(wnid)
+        directory: Path = self.images_directory.joinpath("train" if image_count < train_count else "val").joinpath(wnid)
         if directory.exists():
             # Try to make the directories. Due to threading, they might already be made.
             try:

@@ -27,7 +27,6 @@ if __name__ == "__main__":
     c = ImageDataset(clamp_rotation=True,
                      less_dark=True,
                      hdri=True,
-                     overwrite=False,
                      max_height=0.5,
                      occlusion=0.45,
                      train=train,
