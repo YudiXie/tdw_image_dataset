@@ -615,7 +615,7 @@ class ImageDataset(Controller):
             resp = self.communicate(commands)
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, record, file_index, wnid, scene_record_img_count_this_run, train_count))
+            t = Thread(target=self.save_image, args=(resp, record, self.current_scene, file_index, wnid, scene_record_img_count_this_run, train_count))
             t.daemon = True
             t.start()
             scene_record_img_count_this_run += 1
@@ -767,7 +767,7 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, record: ModelRecord, image_count: int, wnid: str, scene_record_img_count: int, train_count: int) -> None:
+    def save_image(self, resp, record: ModelRecord, scene_name: str, image_count: int, wnid: str, scene_record_img_count: int, train_count: int) -> None:
         """
         Save an image.
 
@@ -789,7 +789,7 @@ class ImageDataset(Controller):
                 pass
 
         # Save the image.
-        filename = f"{record.name}_{image_count:04d}"
+        filename = f"{record.name}_{scene_name}_{image_count:04d}"
 
         # Save the image without resizing.
         if not self.scale:
