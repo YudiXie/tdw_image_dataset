@@ -9,6 +9,7 @@ from typing import List, Dict, Tuple, Optional, Union
 from zipfile import ZipFile
 from distutils import dir_util
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from tdw.controller import Controller
 from tdw.tdw_utils import TDWUtils
@@ -18,10 +19,6 @@ from tdw.scene_data.scene_bounds import SceneBounds
 from tdw.scene_data.region_bounds import RegionBounds
 from tdw.release.pypi import PyPi
 from tdw_image_dataset.image_position import ImagePosition
-
-### Added by Yudi ###
-import pandas as pd
-### Added by Yudi ###
 
 # The required version of TDW.
 REQUIRED_TDW_VERSION: str = "1.9.0"
@@ -385,13 +382,11 @@ class ImageDataset(Controller):
             pbar.update(1)
         pbar.close()
 
-        ### Added by Yudi ###
         # aggregate the image meta files
         df_csv_concat = pd.concat(
             [pd.read_csv(str(p), index_col=0) for p in self.images_meta_directory.iterdir()], 
             ignore_index=True)
         df_csv_concat.to_csv(str(self.output_directory.joinpath('images_meta.csv').resolve()))
-        ### Added by Yudi ###
 
         # Add the end time to the metadata file.
         metadata = json.loads(self.metadata_path.read_text())
@@ -500,7 +495,7 @@ class ImageDataset(Controller):
         # Generate images from the cached spatial data.
         t0 = time()
 
-        ### Added by Yudi ###
+        # store image meta data
         image_file_name_list = []
 
         ty_list = []
@@ -528,7 +523,6 @@ class ImageDataset(Controller):
         object_rot_y_list = []
         object_rot_z_list = []
         object_rot_w_list = []
-        ### Added by Yudi ###
 
         for p in image_positions:
             # Teleport the avatar.
@@ -578,7 +572,6 @@ class ImageDataset(Controller):
             t.start()
             image_count += 1
 
-            ### Added by Yudi ###
             # instruct the build to send screen position of the object
             # the position is likely the bottom center of the object
             # parent the object to the avatar, and send rotation of the object relative to the camera
@@ -641,11 +634,9 @@ class ImageDataset(Controller):
             object_rot_y_list.append(p.object_rotation['y'])
             object_rot_z_list.append(p.object_rotation['z'])
             object_rot_w_list.append(p.object_rotation['w'])
-            ### Added by Yudi ###
             
         t1 = time()
 
-        ### Added by Yudi ###
         # save the meta_data
         save_df = pd.DataFrame.from_dict(
             {
@@ -679,7 +670,6 @@ class ImageDataset(Controller):
 
         csv_path = self.images_meta_directory.joinpath(f'{wnid}_{record.name}_{self.current_scene}_meta_data.csv')
         save_df.to_csv(str(csv_path.resolve()))
-        ### Added by Yudi ###
 
         # Stop sending images.
         # Destroy the object.
