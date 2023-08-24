@@ -657,7 +657,7 @@ class ImageDataset(Controller):
                     relative_euler = obj_ltransforms.get_euler_angles(0)
             assert has_scre and has_ltra, "missing screen position or local transform"
 
-            image_file_name_list.append(f'img_{record.name}_{(file_index - 1):04d}.jpg')
+            image_file_name_list.append(f'img_{record.name}_{self.current_scene}_{(file_index - 1):04d}.jpg')
 
             ty_list.append(ty)  # up-down position, center of image is 0, unit in pixels
             tz_list.append(tz)  # left-right position, center of image is 0, unit in pixels
