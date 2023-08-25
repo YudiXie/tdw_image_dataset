@@ -224,6 +224,9 @@ class ImageDataset(Controller):
                 for skybox in temp:
                     if skybox.location != "interior" and skybox.sun_elevation >= 145:
                         self.skyboxes.append(skybox)
+        
+        # log dataset meta data
+        self.generate_metadata()
 
     def initialize_scene(self, scene_name) -> SceneBounds:
         """
@@ -307,10 +310,6 @@ class ImageDataset(Controller):
 
         :param scene_name: The scene name.
         """
-
-        # Create the metadata file.
-        if not self.metadata_path.is_file():
-            self.generate_metadata()
 
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(scene_name)
