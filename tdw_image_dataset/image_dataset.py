@@ -279,15 +279,13 @@ class ImageDataset(Controller):
         resp = self.communicate(commands)
         return SceneBounds(resp)
 
-    def generate_metadata(self, scene_name: str) -> None:
+    def generate_metadata(self) -> None:
         """
         Generate a metadata file for this dataset.
-
-        :param scene_name: The scene name.
         """
 
         data = {"dataset": str(self.output_directory.resolve()),
-                "scene": scene_name,
+                "scene": [],
                 "train": self.train,
                 "val": self.val,
                 "materials": self.materials is not None,
@@ -311,7 +309,7 @@ class ImageDataset(Controller):
         """
 
         # Create the metadata file.
-        self.generate_metadata(scene_name=scene_name)
+        self.generate_metadata()
 
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(scene_name)
@@ -391,10 +389,8 @@ class ImageDataset(Controller):
         # Add the end time to the metadata file.
         metadata = json.loads(self.metadata_path.read_text())
         end_time = datetime.now().strftime("%H:%M %d.%m.%y")
-        if "end" in metadata:
-            metadata["end"] = end_time
-        else:
-            metadata.update({"end": end_time})
+        metadata.update({"end": end_time})
+        metadata['scene'].append(self.current_scene)
         self.metadata_path.write_text(json.dumps(metadata, sort_keys=True, indent=4))
 
         # Terminate the build.
