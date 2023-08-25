@@ -309,7 +309,8 @@ class ImageDataset(Controller):
         """
 
         # Create the metadata file.
-        self.generate_metadata()
+        if not self.metadata_path.is_file():
+            self.generate_metadata()
 
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(scene_name)
