@@ -385,6 +385,9 @@ class ImageDataset(Controller):
             [pd.read_csv(str(p), index_col=0) for p in self.images_meta_directory.iterdir()], 
             ignore_index=True)
         df_csv_concat.to_csv(str(self.output_directory.joinpath('images_meta.csv').resolve()))
+        # save a shuffled manifest
+        shuffled_df = df_csv_concat.sample(frac=1, random_state=RNG).reset_index(drop=True)
+        shuffled_df.to_csv(str(self.output_directory.joinpath('images_meta_shuffled.csv').resolve()))
 
         # Add the end time to the metadata file.
         metadata = json.loads(self.metadata_path.read_text())
