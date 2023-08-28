@@ -3,12 +3,12 @@ from tdw_image_dataset.image_dataset import ImageDataset
 
 """
 Generate a dataset that is of same size as the HvM dataset
-4608 training iamges and 1152 testing images
+around 4608 training iamges and 1152 testing images
 only have 8 categories
 multiple scenes
 """
 
-# TODO: haven't been tested
+
 if __name__ == "__main__":
     output_dir = Path.home().joinpath("tdw_image_dataset_small_multi_env")
     subset_ids = [
