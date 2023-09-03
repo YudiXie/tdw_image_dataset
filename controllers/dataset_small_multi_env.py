@@ -35,10 +35,10 @@ if __name__ == "__main__":
     
     c = ImageDataset(train=train,
                      val=val,
-                     hdri=False,
+                     hdri=False,##
                      output_directory=output_dir,
-                     launch_build=True,
-                     subset_wnids=subset_ids,
+                     launch_build=True, # for local machine
+                     subset_wnids=subset_ids, # only 8 categories
                      do_zip=False,
                      terminate_build=False,
                      )
