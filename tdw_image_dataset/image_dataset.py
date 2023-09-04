@@ -455,11 +455,17 @@ class ImageDataset(Controller):
         hdri_index = 0
         # The number of iterations on this skybox so far.
         skybox_count = 0
+        skybox_name = 'initial'
         if self.skyboxes:
             # The number of iterations per skybox for this model.
             its_per_skybox = round((train_count + val_count) / len(self.skyboxes))
 
+
+            # TODO: this might be redundant, the image is never captured, 
+            # need to figure out if the image is captured after or before the self.get_add_hdri_skybox and rotate skybox command
+            
             # Set the first skybox.
+            skybox_name = self.skyboxes[hdri_index].name
             hdri_index, skybox_count, skybox_command = self._set_skybox(its_per_skybox, hdri_index, skybox_count)
             self.communicate(skybox_command)
 
@@ -493,6 +499,7 @@ class ImageDataset(Controller):
 
         # store image meta data
         image_file_name_list = []
+        skybox_name_list = []  # save skybox name
 
         ty_list = []
         tz_list = []
@@ -554,6 +561,7 @@ class ImageDataset(Controller):
             # Maybe set a new skybox.
             # Rotate the skybox.
             if self.skyboxes:
+                skybox_name = self.skyboxes[hdri_index].name # the name of the skybox the following command set to
                 hdri_index, skybox_count, command = self._set_skybox(its_per_skybox, hdri_index, skybox_count)
                 if command:
                     commands.append(command)
@@ -604,6 +612,7 @@ class ImageDataset(Controller):
             assert has_scre and has_ltra, "missing screen position or local transform"
 
             image_file_name_list.append(f'img_{record.name}_{self.current_scene}_{(image_count - 1):04d}.jpg')
+            skybox_name_list.append(skybox_name)
 
             ty_list.append(ty)  # up-down position, center of image is 0, unit in pixels
             tz_list.append(tz)  # left-right position, center of image is 0, unit in pixels
@@ -641,6 +650,7 @@ class ImageDataset(Controller):
                 'record_wcategory': record.wcategory,
                 'record_name': record.name,
                 'image_filename': image_file_name_list,
+                'skybox_name': skybox_name_list,
                 'ty': ty_list,
                 'tz': tz_list,
                 'neg_x': neg_x_list,
