@@ -463,8 +463,6 @@ class ImageDataset(Controller):
             # Set the first skybox.
             hdri_index, skybox_count, skybox_command = self._set_skybox(self.skyboxes, its_per_skybox, hdri_index, skybox_count)
             self.communicate(skybox_command)
-        else:
-            its_per_skybox = 0
 
         while len(image_positions) < train_count + val_count:
             # Get a random "room".
