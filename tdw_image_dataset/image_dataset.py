@@ -403,11 +403,10 @@ class ImageDataset(Controller):
         if self.do_zip:
             self.zip_images()
 
-    def _set_skybox(self, records: List[HDRISkyboxRecord], its_per_skybox: int, hdri_index: int, skybox_count: int) -> Tuple[int, int, Optional[dict]]:
+    def _set_skybox(self, its_per_skybox: int, hdri_index: int, skybox_count: int) -> Tuple[int, int, Optional[dict]]:
         """
         If it's time, set a new skybox.
 
-        :param records: All HDRI records.
         :param its_per_skybox: Iterations per skybox.
         :param hdri_index: The index in the records list.
         :param skybox_count: The number of images of this model with this skybox.
@@ -417,14 +416,14 @@ class ImageDataset(Controller):
 
         # Set a new skybox.
         if skybox_count == 0:
-            command = self.get_add_hdri_skybox(records[hdri_index].name)
+            command = self.get_add_hdri_skybox(self.skyboxes[hdri_index].name)
         # It's not time yet to set a new skybox. Don't send a command.
         else:
             command = None
         skybox_count += 1
         if skybox_count >= its_per_skybox:
             hdri_index += 1
-            if hdri_index >= len(records):
+            if hdri_index >= len(self.skyboxes):
                 hdri_index = 0
             skybox_count = 0
         return hdri_index, skybox_count, command
@@ -461,7 +460,7 @@ class ImageDataset(Controller):
             its_per_skybox = round((train_count + val_count) / len(self.skyboxes))
 
             # Set the first skybox.
-            hdri_index, skybox_count, skybox_command = self._set_skybox(self.skyboxes, its_per_skybox, hdri_index, skybox_count)
+            hdri_index, skybox_count, skybox_command = self._set_skybox(its_per_skybox, hdri_index, skybox_count)
             self.communicate(skybox_command)
 
         while len(image_positions) < train_count + val_count:
@@ -555,7 +554,7 @@ class ImageDataset(Controller):
             # Maybe set a new skybox.
             # Rotate the skybox.
             if self.skyboxes:
-                hdri_index, skybox_count, command = self._set_skybox(self.skyboxes, its_per_skybox, hdri_index, skybox_count)
+                hdri_index, skybox_count, command = self._set_skybox(its_per_skybox, hdri_index, skybox_count)
                 if command:
                     commands.append(command)
                 commands.append({"$type": "rotate_hdri_skybox_by",
