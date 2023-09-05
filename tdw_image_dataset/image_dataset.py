@@ -52,6 +52,7 @@ class ImageDataset(Controller):
                  max_height: float = 0.5,
                  occlusion: float = 0.45,
                  less_dark: bool = True,
+                 exterior_only: bool = True,
                  id_pass: bool = False,
                  do_zip: bool = True,
                  train: int = 1300000,
@@ -76,6 +77,7 @@ class ImageDataset(Controller):
         :param max_height: The percentage of the environment height that is the ceiling for the avatar and object. Must be between 0 and 1.
         :param occlusion: The occlusion threshold. Lower value = slower FPS, better composition. Must be between 0 and 1.
         :param less_dark: If True, there will be more daylight exterior skyboxes (requires hdri == True)
+        :param exterior_only: If True, only use exterior skyboxes (requires hdri == True)
         :param id_pass: If True, send and save the _id pass.
         :param do_zip: If True, zip the directory at the end.
         :param train: The number of train images.
@@ -184,6 +186,10 @@ class ImageDataset(Controller):
         """
         self.less_dark: bool = less_dark
         """:field
+        If True, only use exterior skyboxes (requires hdri == True)
+        """
+        self.exterior_only: bool = exterior_only
+        """:field
         Cached model substructure data.
         """
         self.substructures: Dict[str, List[dict]] = dict()
@@ -218,11 +224,13 @@ class ImageDataset(Controller):
         # Get skybox records.
         if hdri:
             self.skyboxes: List[HDRISkyboxRecord] = Controller.HDRI_SKYBOX_LIBRARIANS["hdri_skyboxes.json"].records
+            if self.exterior_only:
+                self.skyboxes = [s for s in self.skyboxes if s.location == "exterior"]
             # Prefer exterior daytime skyboxes by adding them multiple times to the list.
             if self.less_dark:
                 temp = self.skyboxes[:]
                 for skybox in temp:
-                    if skybox.location != "interior" and skybox.sun_elevation >= 145:
+                    if skybox.location == "exterior" and skybox.sun_elevation >= 145:
                         self.skyboxes.append(skybox)
         
         # log dataset meta data
@@ -301,6 +309,7 @@ class ImageDataset(Controller):
                 "max_height": self.max_height,
                 "occlusion": self.occlusion,
                 "less_dark": self.less_dark,
+                "exterior_only": self.exterior_only,
                 "start": datetime.now().strftime("%H:%M %d.%m.%y")}
         self.metadata_path.write_text(json.dumps(data, sort_keys=True, indent=4))
 
