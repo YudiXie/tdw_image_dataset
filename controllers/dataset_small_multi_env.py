@@ -22,7 +22,7 @@ if __name__ == "__main__":
         'n04461879', # ‘toy’, 12 records
     ]
 
-    scenes = ["suburb_scene_2018",
+    scenes = [
               "building_site",
               "lava_field",
               "iceland_beach",
@@ -35,7 +35,6 @@ if __name__ == "__main__":
     
     c = ImageDataset(train=train,
                      val=val,
-                     hdri=False,##
                      output_directory=output_dir,
                      launch_build=True, # for local machine
                      subset_wnids=subset_ids, # only 8 categories

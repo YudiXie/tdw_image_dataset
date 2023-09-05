@@ -403,30 +403,27 @@ class ImageDataset(Controller):
         if self.do_zip:
             self.zip_images()
 
-    def _set_skybox(self, its_per_skybox: int, hdri_index: int, skybox_count: int) -> Tuple[int, int, Optional[dict]]:
+    def _set_skybox(self) -> Optional[dict]:
         """
         If it's time, set a new skybox.
 
-        :param its_per_skybox: Iterations per skybox.
-        :param hdri_index: The index in the records list.
-        :param skybox_count: The number of images of this model with this skybox.
-
-        :return: Data for setting the skybox.
+        :return: command for setting the skybox.
         """
-
         # Set a new skybox.
-        if skybox_count == 0:
-            command = self.get_add_hdri_skybox(self.skyboxes[hdri_index].name)
+        if self.skybox_img_idx == 0:
+            command = self.get_add_hdri_skybox(self.skyboxes[self.skybox_idx].name)
         # It's not time yet to set a new skybox. Don't send a command.
         else:
             command = None
-        skybox_count += 1
-        if skybox_count >= its_per_skybox:
-            hdri_index += 1
-            if hdri_index >= len(self.skyboxes):
-                hdri_index = 0
-            skybox_count = 0
-        return hdri_index, skybox_count, command
+        
+        self.skybox_img_idx += 1
+        if self.skybox_img_idx >= self.imgs_per_skybox:
+            self.skybox_img_idx = 0
+            # move to the next skybox in the next call
+            self.skybox_idx += 1
+            if self.skybox_idx >= len(self.skyboxes):
+                self.skybox_idx = 0
+        return command
 
     def process_model(self, record: ModelRecord, scene_bounds: SceneBounds, train_count: int, val_count: int, wnid: str) -> float:
         """
@@ -451,23 +448,17 @@ class ImageDataset(Controller):
         # Cache the initial rotation of the object.
         if record.name not in self.initial_rotations:
             self.initial_rotations[record.name] = TDWUtils.array_to_vector4(Transforms(resp[0]).get_rotation(0))
+        
         # The index in the HDRI records array.
-        hdri_index = 0
-        # The number of iterations on this skybox so far.
-        skybox_count = 0
+        self.skybox_idx = 0
+        # The count of images on this skybox so far.
+        self.skybox_img_idx = 0
         skybox_name = 'initial'
         if self.skyboxes:
-            # The number of iterations per skybox for this model.
-            its_per_skybox = round((train_count + val_count) / len(self.skyboxes))
-
-
-            # TODO: this might be redundant, the image is never captured, 
-            # need to figure out if the image is captured after or before the self.get_add_hdri_skybox and rotate skybox command
-            
-            # Set the first skybox.
-            skybox_name = self.skyboxes[hdri_index].name
-            hdri_index, skybox_count, skybox_command = self._set_skybox(its_per_skybox, hdri_index, skybox_count)
-            self.communicate(skybox_command)
+            # The number of images per skybox for this model in this scene.
+            self.imgs_per_skybox = int((train_count + val_count) / len(self.skyboxes))
+            if self.imgs_per_skybox == 0:
+                self.imgs_per_skybox = 1
 
         while len(image_positions) < train_count + val_count:
             # Get a random "room".
@@ -558,11 +549,11 @@ class ImageDataset(Controller):
                                           "material_name": material_name,
                                           "object_name": sub_object["name"],
                                           "material_index": i}])
-            # Maybe set a new skybox.
-            # Rotate the skybox.
+            # Maybe set a new skybox. Rotate the skybox.
             if self.skyboxes:
-                skybox_name = self.skyboxes[hdri_index].name # the name of the skybox the following command set to
-                hdri_index, skybox_count, command = self._set_skybox(its_per_skybox, hdri_index, skybox_count)
+                # the name of the skybox the following command set to
+                skybox_name = self.skyboxes[self.skybox_idx].name
+                command = self._set_skybox()
                 if command:
                     commands.append(command)
                 commands.append({"$type": "rotate_hdri_skybox_by",
