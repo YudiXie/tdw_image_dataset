@@ -22,7 +22,7 @@ if __name__ == "__main__":
         'n04461879', # ‘toy’, 12 records
     ]
 
-    scenes = [
+    scenes = ["suburb_scene_2018",
               "building_site",
               "lava_field",
               "iceland_beach",
