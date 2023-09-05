@@ -10,7 +10,7 @@ multiple scenes
 
 
 if __name__ == "__main__":
-    output_dir = Path.home().joinpath("tdw_image_dataset_small_multi_env")
+    output_dir = Path.home().joinpath("tdw_image_dataset_small_multi_env_hdri")
     subset_ids = [
         'n02774152', # 'bag, handbag, pocketbook, purse’, 12 records
         'n02933112', # 'cabinet’, 33 records
