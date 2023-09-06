@@ -565,8 +565,8 @@ class ImageDataset(Controller):
                 command = self._set_skybox()
                 if command:
                     commands.append(command)
-                commands.append({"$type": "rotate_hdri_skybox_by",
-                                 "angle": RNG.uniform(0, 360)})
+                # commands.append({"$type": "rotate_hdri_skybox_by",
+                #                  "angle": RNG.uniform(0, 360)})
 
             resp = self.communicate(commands)
 
