@@ -323,20 +323,20 @@ class ImageDataset(Controller):
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(scene_name)
 
-        if self.subset_wnids is None:
-            # Fetch the WordNet IDs.
-            wnids = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
-            # Remove any wnids that don't have valid models.
-            wnids = [w for w in wnids if len(
-                [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                if not r.do_not_use]) > 0]
-        else:
+        if self.subset_wnids:
             wnids = self.subset_wnids
             for w in wnids:
                 # check if any models is usable
                 assert len([r for r in 
                             Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w) 
                             if not r.do_not_use]) > 0, f"ID: {w} do not have usable models"
+        else:
+            # Fetch the WordNet IDs.
+            wnids = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
+            # Remove any wnids that don't have valid models.
+            wnids = [w for w in wnids if len(
+                [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
+                if not r.do_not_use]) > 0]
 
         # Set the number of train and val images per wnid.
         num_train = self.train / len(wnids)
