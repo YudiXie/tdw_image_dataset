@@ -20,8 +20,8 @@ if __name__ == "__main__":
               "dead_grotto",
               ]
     
-    train = int(4608 / len(scenes))
-    val = int(1152 / len(scenes))
+    train = int(1300000 / len(scenes))
+    val = int(50000 / len(scenes))
     
     c = ImageDataset(train=train,
                      val=val,
