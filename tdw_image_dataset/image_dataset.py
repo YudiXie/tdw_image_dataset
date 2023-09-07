@@ -299,7 +299,7 @@ class ImageDataset(Controller):
                 "scene": [],
                 "train": self.train,
                 "val": self.val,
-                "materials": self.materials is not None,
+                "materials": self.materials,
                 "hdri": self.skyboxes is not None,
                 "screen_width": self.screen_width,
                 "screen_height": self.screen_height,
@@ -544,7 +544,7 @@ class ImageDataset(Controller):
                          "id": o_id,
                          "rotation": p.object_rotation}]
             # Set the visual materials.
-            if self.materials is not None:
+            if self.materials:
                 if record.name not in self.substructures:
                     self.substructures[record.name] = record.substructure
                 for sub_object in self.substructures[record.name]:

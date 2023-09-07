@@ -27,6 +27,7 @@ if __name__ == "__main__":
     c = ImageDataset(train=train,
                      val=val,
                      do_zip=False,
+                     materials=True,
                      library=args.library,
                      output_directory=args.dir,
                      terminate_build=False,

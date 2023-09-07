@@ -22,6 +22,7 @@ if __name__ == "__main__":
     c = ImageDataset(train=4608, val=1152,
                      hdri=False,
                      output_directory=Path.home().joinpath("tdw_image_dataset_small"),
+                     materials=True,
                      launch_build=True,
                      subset_wnids=subset_ids,
                      do_zip=True,
