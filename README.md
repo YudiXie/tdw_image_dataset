@@ -13,6 +13,17 @@ Generate a dataset of synthetic images using [TDW](https://github.com/threedworl
 3. `pip3 install -e .`
 4. `python3 download_build.py` (This will download the correct version of the build)
 
+## Log latents install
+```
+git clone https://github.com/YudiXie/tdw_image_dataset.git
+git checkout log_latents
+
+conda create -n tdw python=3.9
+conda activate tdw
+conda install pandas
+pip install tdw
+```
+
 ## Upgrade
 
 1. `cd tdw_image_dataset`
