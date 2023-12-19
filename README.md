@@ -22,6 +22,9 @@ conda create -n tdw python=3.9
 conda activate tdw
 conda install pandas
 pip install tdw
+
+cd tdw_image_dataset
+pip install -e .
 ```
 
 ## Upgrade
