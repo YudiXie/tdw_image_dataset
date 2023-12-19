@@ -30,23 +30,20 @@ if __name__ == "__main__":
               "dead_grotto",
               ]
     
-    train = int(4608 / len(scenes))
-    val = int(1152 / len(scenes))
-    
-    c = ImageDataset(train=train,
-                     val=val,
+    c = ImageDataset(
+                     num_img_total=(4608 + 1152),
                      output_directory=output_dir,
                      materials=True,
                      launch_build=True, # for local machine
                      subset_wnids=subset_ids, # only 8 categories
                      do_zip=False,
                      terminate_build=False,
+                     scene_list=scenes,
                      )
 
     # Generate a "partial" dataset per scene.
-    for scene, i in zip(scenes, range(len(scenes))):
-        print(f"{scene}\t{i + 1}/{len(scenes)}")
-        c.run(scene_name=scene)
+    c.run_multi_scene()
+
     # Terminate the build.
     c.communicate({"$type": "terminate"})
 

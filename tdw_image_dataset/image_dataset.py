@@ -54,13 +54,13 @@ class ImageDataset(Controller):
                  exterior_only: bool = True,
                  id_pass: bool = False,
                  do_zip: bool = True,
-                 train: int = 1300000,
-                 val: int = 50000,
+                 num_img_total: int = 5000,
                  library: str = "models_core.json",
                  random_seed: int = 0,
                  subset_wnids: Optional[List[str]] = None,
                  offset: float = 0.0,
                  terminate_build: bool = True,
+                 scene_list = ['building_site', ],
                  ):
         """
         :param output_directory: The path to the root output directory.
@@ -79,8 +79,7 @@ class ImageDataset(Controller):
         :param exterior_only: If True, only use exterior skyboxes (requires hdri == True)
         :param id_pass: If True, send and save the _id pass.
         :param do_zip: If True, zip the directory at the end.
-        :param train: The number of train images.
-        :param val: The number of val images.
+        :param num_img_total: The number of generated images for all scenes
         :param library: The path to the library records file.
         :param random_seed: The random seed.
         :param subset_wnids: create a subset only use these wnid categories.
@@ -158,13 +157,9 @@ class ImageDataset(Controller):
         """
         self.do_zip: bool = do_zip
         """:field
-        The number of train images.
+        The number of generated images
         """
-        self.train: int = train
-        """:field
-        The number of val images.
-        """
-        self.val: int = val
+        self.num_img_total: int = num_img_total
         """:field
         Restrict the agent from offset to the edge of the region.
         """
@@ -176,6 +171,8 @@ class ImageDataset(Controller):
 
         self.subset_wnids = subset_wnids
         self.current_scene = ''
+        self.scene_list = scene_list
+        self.num_img_per_scene = int(self.num_img_total / len(self.scene_list))
 
         assert 0 < max_height <= 1.0, f"Invalid max height: {max_height}"
         assert 0 < occlusion <= 1.0, f"Invalid occlusion threshold: {occlusion}"
@@ -200,7 +197,7 @@ class ImageDataset(Controller):
         If True, set random visual materials for each sub-mesh of each object.
         """
         self.materials: bool = materials
-        super().__init__(port=port, launch_build=launch_build, check_version=False)
+        super().__init__(port=port, launch_build=launch_build, check_version=True)
         resp = self.communicate({"$type": "send_version"})
         for i in range(len(resp) - 1):
             if OutputData.get_data_type_id(resp[i]) == "vers":
@@ -295,8 +292,7 @@ class ImageDataset(Controller):
 
         data = {"dataset": str(self.output_directory.resolve()),
                 "scene": [],
-                "train": self.train,
-                "val": self.val,
+                "num_img_per_scene": self.num_img_per_scene,
                 "materials": self.materials,
                 "hdri": self.skyboxes is not None,
                 "screen_width": self.screen_width,
@@ -310,6 +306,12 @@ class ImageDataset(Controller):
                 "exterior_only": self.exterior_only,
                 "start": datetime.now().strftime("%H:%M %d.%m.%y")}
         self.metadata_path.write_text(json.dumps(data, sort_keys=True, indent=4))
+
+    def run_multi_scene(self) -> None:
+        num_scene = len(self.scene_list)
+        for scene, i in zip(self.scene_list, range(num_scene)):
+            print(f"{scene}\t{i + 1}/{num_scene}")
+            self.run(scene_name=scene)
 
     def run(self, scene_name: str) -> None:
         """
@@ -336,9 +338,8 @@ class ImageDataset(Controller):
                 [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
                 if not r.do_not_use]) > 0]
 
-        # Set the number of train and val images per wnid.
-        num_train = self.train / len(wnids)
-        num_val = self.val / len(wnids)
+        # Set the number of generated images per wnid.
+        num_img_per_wnid = int(self.num_img_per_scene / len(wnids))
 
         # Create the progress bar.
         pbar = tqdm(total=len(wnids))
@@ -361,11 +362,8 @@ class ImageDataset(Controller):
             # Remove models that have multiple objects
             records = [r for r in records if r.name not in ['b02_bag', 'lantern_2010', 'b04_bottle_max']]
 
-            # Get the train and val counts.
-            train_count = [len(a) for a in np.array_split(
-                np.arange(num_train), len(records))][0]
-            val_count = [len(a) for a in np.array_split(
-                np.arange(num_val), len(records))][0]
+            # Get the numer of images per object model.
+            num_img_per_model = int(num_img_per_wnid / len(records))
 
             # Process each record.
             fps = "nan"
@@ -378,8 +376,8 @@ class ImageDataset(Controller):
                     continue
 
                 # Create all of the images for this model.
-                dt = self.process_model(record, scene_bounds, train_count, val_count, w)
-                fps = round((train_count + val_count) / dt)
+                dt = self.process_model(record, scene_bounds, num_img_per_model, w)
+                fps = round(num_img_per_model / dt)
 
                 # Mark this record as processed.
                 with done_models_path.open("at") as f:
@@ -432,14 +430,13 @@ class ImageDataset(Controller):
                 self.skybox_idx = 0
         return command
 
-    def process_model(self, record: ModelRecord, scene_bounds: SceneBounds, train_count: int, val_count: int, wnid: str) -> float:
+    def process_model(self, record: ModelRecord, scene_bounds: SceneBounds, img_count_per_model: int, wnid: str) -> float:
         """
         Capture images of a model.
 
         :param record: The model record.
         :param scene_bounds: The bounds of the scene.
-        :param train_count: Number of train images for this model in one scene.
-        :param val_count: Number of val images for this model in one scene.
+        :param img_count_per_model: Number of images for this model in one scene.
         :param wnid: The wnid of the record.
         :return The time elapsed.
         """
@@ -463,11 +460,11 @@ class ImageDataset(Controller):
         skybox_name = 'initial'
         if self.skyboxes:
             # The number of images per skybox for this model in this scene.
-            self.imgs_per_skybox = int((train_count + val_count) / len(self.skyboxes))
+            self.imgs_per_skybox = int(img_count_per_model / len(self.skyboxes))
             if self.imgs_per_skybox == 0:
                 self.imgs_per_skybox = 1
 
-        while len(image_positions) < train_count + val_count:
+        while len(image_positions) < img_count_per_model:
             # Get a random "room".
             room: RegionBounds = scene_bounds.regions[RNG.randint(0, len(scene_bounds.regions))]
             # Get the occlusion.
@@ -569,7 +566,7 @@ class ImageDataset(Controller):
             resp = self.communicate(commands)
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, record, self.current_scene, image_count, wnid, train_count))
+            t = Thread(target=self.save_image, args=(resp, record, self.current_scene, image_count, wnid))
             t.daemon = True
             t.start()
             image_count += 1
@@ -672,6 +669,8 @@ class ImageDataset(Controller):
             }
         )
 
+        # shouwing the last index in the image of the csv file
+        # csv_path = self.images_meta_directory.joinpath(f'{img_idx:010}_{wnid}_{record.name}_{self.current_scene}_meta_data.csv')
         csv_path = self.images_meta_directory.joinpath(f'{wnid}_{record.name}_{self.current_scene}_meta_data.csv')
         save_df.to_csv(str(csv_path.resolve()))
 
@@ -718,7 +717,7 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, record: ModelRecord, scene_name: str, image_count: int, wnid: str, train_count: int) -> None:
+    def save_image(self, resp, record: ModelRecord, scene_name: str, image_count: int, wnid: str) -> None:
         """
         Save an image.
 
@@ -726,11 +725,10 @@ class ImageDataset(Controller):
         :param record: The model record.
         :param image_count: The image count.
         :param wnid: The wnid.
-        :param train_count: Total number of train images to generate for this scence and this record.
         """
 
         # Get the directory.
-        directory: Path = self.images_directory.joinpath("train" if image_count < train_count else "val").joinpath(wnid)
+        directory: Path = self.images_directory.joinpath("all_images").joinpath(wnid)
         if directory.exists():
             # Try to make the directories. Due to threading, they might already be made.
             try:
