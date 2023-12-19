@@ -17,7 +17,6 @@ from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transfo
 from tdw.librarian import ModelLibrarian, MaterialLibrarian, HDRISkyboxLibrarian, ModelRecord, HDRISkyboxRecord
 from tdw.scene_data.scene_bounds import SceneBounds
 from tdw.scene_data.region_bounds import RegionBounds
-from tdw.release.pypi import PyPi
 from tdw_image_dataset.image_position import ImagePosition
 
 # The required version of TDW.
@@ -206,9 +205,8 @@ class ImageDataset(Controller):
         for i in range(len(resp) - 1):
             if OutputData.get_data_type_id(resp[i]) == "vers":
                 build_version = Version(resp[i]).get_tdw_version()
-                PyPi.required_tdw_version_is_installed(build_version=build_version,
-                                                       required_version=REQUIRED_TDW_VERSION,
-                                                       comparison=">=")
+                print(f"Build version: {build_version}, required version: >={REQUIRED_TDW_VERSION}")
+
         """:field
         The name of the model library file.
         """
