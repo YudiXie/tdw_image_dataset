@@ -110,13 +110,6 @@ class ImageDataset(Controller):
         """
         self.metadata_path: Path = self.output_directory.joinpath("metadata.txt")
         """:field
-        The path to the image metadata file.
-        """
-        self.images_meta_directory: Path = self.output_directory.joinpath("images_meta")
-        if not self.images_meta_directory.exists():
-            self.images_meta_directory.mkdir(parents=True)
-
-        """:field
         The width of the build screen in pixels.
         """
         self.screen_width: int = screen_width
@@ -386,13 +379,13 @@ class ImageDataset(Controller):
         pbar.close()
 
         # aggregate the image meta files
-        df_csv_concat = pd.concat(
-            [pd.read_csv(str(p), index_col=0) for p in self.images_meta_directory.iterdir()], 
-            ignore_index=True)
-        df_csv_concat.to_csv(str(self.output_directory.joinpath('images_meta.csv').resolve()))
-        # save a shuffled manifest
-        shuffled_df = df_csv_concat.sample(frac=1, random_state=RNG).reset_index(drop=True)
-        shuffled_df.to_csv(str(self.output_directory.joinpath('images_meta_shuffled.csv').resolve()))
+        # df_csv_concat = pd.concat(
+        #     [pd.read_csv(str(p), index_col=0) for p in self.images_meta_directory.iterdir()], 
+        #     ignore_index=True)
+        # df_csv_concat.to_csv(str(self.output_directory.joinpath('images_meta.csv').resolve()))
+        # # save a shuffled manifest
+        # shuffled_df = df_csv_concat.sample(frac=1, random_state=RNG).reset_index(drop=True)
+        # shuffled_df.to_csv(str(self.output_directory.joinpath('images_meta_shuffled.csv').resolve()))
 
         # Add the end time to the metadata file.
         metadata = json.loads(self.metadata_path.read_text())
