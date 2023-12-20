@@ -49,4 +49,4 @@ if __name__ == "__main__":
     c.communicate({"$type": "terminate"})
 
     # Zip.
-    c.zip_images()
+    # c.zip_images()
