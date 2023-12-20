@@ -492,36 +492,6 @@ class ImageDataset(Controller):
         # Generate images from the cached spatial data.
         t0 = time()
 
-        # store image meta data
-        image_file_name_list = []
-        skybox_name_list = []  # save skybox name
-
-        ty_list = []
-        tz_list = []
-        neg_x_list = []
-
-        euler_1_list = []
-        euler_2_list = []
-        euler_3_list = []
-
-        avatar_pos_x_list = []
-        avatar_pos_y_list = []
-        avatar_pos_z_list = []
-
-        camera_rot_x_list = []
-        camera_rot_y_list = []
-        camera_rot_z_list = []
-        camera_rot_w_list = []
-        
-        object_pos_x_list = []
-        object_pos_y_list = []
-        object_pos_z_list = []
-
-        object_rot_x_list = []
-        object_rot_y_list = []
-        object_rot_z_list = []
-        object_rot_w_list = []
-
         for p in image_positions:
             # Teleport the avatar.
             # Rotate the avatar's camera.
@@ -566,10 +536,9 @@ class ImageDataset(Controller):
             resp = self.communicate(commands)
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, record, self.current_scene, image_count, wnid))
+            t = Thread(target=self.save_image, args=(resp, self.current_scene, wnid, record.name, image_count))
             t.daemon = True
             t.start()
-            image_count += 1
 
             # instruct the build to send screen position of the object
             # the position is likely the bottom center of the object
@@ -606,73 +575,41 @@ class ImageDataset(Controller):
                     relative_euler = obj_ltransforms.get_euler_angles(0)
             assert has_scre and has_ltra, "missing screen position or local transform"
 
-            image_file_name_list.append(f'img_{record.name}_{self.current_scene}_{(image_count - 1):04d}.jpg')
-            skybox_name_list.append(skybox_name)
-
-            ty_list.append(ty)  # up-down position, center of image is 0, unit in pixels
-            tz_list.append(tz)  # left-right position, center of image is 0, unit in pixels
-            neg_x_list.append(neg_x)  # depth of object, unit in 3D space in TDW
-
-            euler_1_list.append(relative_euler[0])
-            euler_2_list.append(relative_euler[1])
-            euler_3_list.append(relative_euler[2])
-
-            avatar_pos_x_list.append(p.avatar_position['x'])
-            avatar_pos_y_list.append(p.avatar_position['y'])
-            avatar_pos_z_list.append(p.avatar_position['z'])
-
-            camera_rot_x_list.append(p.camera_rotation['x'])
-            camera_rot_y_list.append(p.camera_rotation['y'])
-            camera_rot_z_list.append(p.camera_rotation['z'])
-            camera_rot_w_list.append(p.camera_rotation['w'])
-            
-            object_pos_x_list.append(p.object_position['x'])
-            object_pos_y_list.append(p.object_position['y'])
-            object_pos_z_list.append(p.object_position['z'])
-
-            object_rot_x_list.append(p.object_rotation['x'])
-            object_rot_y_list.append(p.object_rotation['y'])
-            object_rot_z_list.append(p.object_rotation['z'])
-            object_rot_w_list.append(p.object_rotation['w'])
-            
-        t1 = time()
-
-        # save the meta_data
-        save_df = pd.DataFrame.from_dict(
-            {
+            save_dict = {
                 'scene_name': self.current_scene,
                 'wnid': wnid,
                 'record_wcategory': record.wcategory,
                 'record_name': record.name,
-                'image_filename': image_file_name_list,
-                'skybox_name': skybox_name_list,
-                'ty': ty_list,
-                'tz': tz_list,
-                'neg_x': neg_x_list,
-                'euler_1': euler_1_list,
-                'euler_2': euler_2_list,
-                'euler_3': euler_3_list,
-                'avatar_pos_x': avatar_pos_x_list,
-                'avatar_pos_y': avatar_pos_y_list,
-                'avatar_pos_z': avatar_pos_z_list,
-                'camera_rot_x': camera_rot_x_list,
-                'camera_rot_y': camera_rot_y_list,
-                'camera_rot_z': camera_rot_z_list,
-                'camera_rot_w': camera_rot_w_list,
-                'object_pos_x': object_pos_x_list,
-                'object_pos_y': object_pos_y_list,
-                'object_pos_z': object_pos_z_list,
-                'object_rot_x': object_rot_x_list,
-                'object_rot_y': object_rot_y_list,
-                'object_rot_z': object_rot_z_list,
-                'object_rot_w': object_rot_w_list,
+                'image_file_name': f"img_{image_count:010d}",
+                'skybox_name': skybox_name,
+                'ty': ty, # up-down position, center of image is 0, unit in pixels
+                'tz': tz, # left-right position, center of image is 0, unit in pixels
+                'neg_x': neg_x, # depth of object, unit in 3D space in TDW
+                'euler_1': relative_euler[0],
+                'euler_2': relative_euler[1],
+                'euler_3': relative_euler[2],
+                'avatar_pos_x': p.avatar_position['x'],
+                'avatar_pos_y': p.avatar_position['y'],
+                'avatar_pos_z': p.avatar_position['z'],
+                'camera_rot_x': p.camera_rotation['x'],
+                'camera_rot_y': p.camera_rotation['y'],
+                'camera_rot_z': p.camera_rotation['z'],
+                'camera_rot_w': p.camera_rotation['w'],
+                'object_pos_x': p.object_position['x'],
+                'object_pos_y': p.object_position['y'],
+                'object_pos_z': p.object_position['z'],
+                'object_rot_x': p.object_rotation['x'],
+                'object_rot_y': p.object_rotation['y'],
+                'object_rot_z': p.object_rotation['z'],
+                'object_rot_w': p.object_rotation['w'],
             }
-        )
+            t2 = Thread(target=self.save_meta, args=(save_dict, self.current_scene, wnid, record.name, image_count))
+            t2.daemon = True
+            t2.start()
 
-        # shouwing the last index in the image of the csv file
-        # csv_path = self.images_meta_directory.joinpath(f'{img_idx:010}_{wnid}_{record.name}_{self.current_scene}_meta_data.csv')
-        csv_path = self.images_meta_directory.joinpath(f'{wnid}_{record.name}_{self.current_scene}_meta_data.csv')
-        save_df.to_csv(str(csv_path.resolve()))
+            image_count += 1
+            
+        t1 = time()
 
         # Stop sending images.
         # Destroy the object.
@@ -717,7 +654,7 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, record: ModelRecord, scene_name: str, image_count: int, wnid: str) -> None:
+    def save_image(self, resp, scene_name: str, wnid: str, record_name: str, image_count: int) -> None:
         """
         Save an image.
 
@@ -728,7 +665,7 @@ class ImageDataset(Controller):
         """
 
         # Get the directory.
-        directory: Path = self.images_directory.joinpath("all_images").joinpath(scene_name).joinpath(wnid).joinpath(record.name)
+        directory: Path = self.images_directory.joinpath("all_images").joinpath(scene_name).joinpath(wnid).joinpath(record_name)
         if directory.exists():
             # Try to make the directories. Due to threading, they might already be made.
             try:
@@ -737,7 +674,7 @@ class ImageDataset(Controller):
                 pass
 
         # Save the image.
-        filename = f"{record.name}_{scene_name}_{image_count:04d}"
+        filename = f"img_{image_count:010d}"
 
         # Save the image without resizing.
         if not self.scale:
@@ -748,6 +685,22 @@ class ImageDataset(Controller):
             TDWUtils.save_images(Images(resp[0]), filename,
                                  output_directory=directory,
                                  resize_to=self.output_size)
+    
+
+    def save_meta(self, save_dict: dict, scene_name: str, wnid: str, record_name: str, image_count: int) -> None:
+        # Get the directory.
+        directory: Path = self.images_directory.joinpath("all_images").joinpath(scene_name).joinpath(wnid).joinpath(record_name)
+        if directory.exists():
+            # Try to make the directories. Due to threading, they might already be made.
+            try:
+                directory.mkdir(parents=True)
+            except OSError:
+                pass
+        
+        save_df = pd.DataFrame.from_dict(save_dict)
+        csv_path = directory.joinpath(f"img_{image_count:010d}_info.csv")
+        save_df.to_csv(str(csv_path.resolve()), header=False, index=False)
+
 
     def get_occlusion(self, o_name: str, o_id: int, region: RegionBounds) -> Tuple[float, ImagePosition]:
         """
