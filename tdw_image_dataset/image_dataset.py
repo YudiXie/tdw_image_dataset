@@ -665,7 +665,7 @@ class ImageDataset(Controller):
         """
 
         # Get the directory.
-        directory: Path = self.images_directory.joinpath("all_images").joinpath(scene_name).joinpath(wnid).joinpath(record_name)
+        directory: Path = self.images_directory.joinpath(scene_name).joinpath(wnid).joinpath(record_name)
         if directory.exists():
             # Try to make the directories. Due to threading, they might already be made.
             try:
@@ -689,7 +689,7 @@ class ImageDataset(Controller):
 
     def save_meta(self, save_dict: dict, scene_name: str, wnid: str, record_name: str, image_count: int) -> None:
         # Get the directory.
-        directory: Path = self.images_directory.joinpath("all_images").joinpath(scene_name).joinpath(wnid).joinpath(record_name)
+        directory: Path = self.images_directory.joinpath(scene_name).joinpath(wnid).joinpath(record_name)
         if directory.exists():
             # Try to make the directories. Due to threading, they might already be made.
             try:
