@@ -697,7 +697,11 @@ class ImageDataset(Controller):
             except OSError:
                 pass
         
-        save_df = pd.DataFrame.from_dict(save_dict)
+        new_save_dict = {}
+        for k, v in save_dict.items():
+            new_save_dict[k] = [v, ]
+        
+        save_df = pd.DataFrame.from_dict(new_save_dict)
         csv_path = directory.joinpath(f"img_{image_count:010d}_info.csv")
         save_df.to_csv(str(csv_path.resolve()), header=False, index=False)
 
