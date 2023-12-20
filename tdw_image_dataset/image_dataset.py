@@ -728,7 +728,7 @@ class ImageDataset(Controller):
         """
 
         # Get the directory.
-        directory: Path = self.images_directory.joinpath("all_images").joinpath(wnid)
+        directory: Path = self.images_directory.joinpath("all_images").joinpath(scene_name).joinpath(wnid).joinpath(record.name)
         if directory.exists():
             # Try to make the directories. Due to threading, they might already be made.
             try:
