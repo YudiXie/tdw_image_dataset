@@ -165,7 +165,6 @@ class ImageDataset(Controller):
         self.subset_wnids = subset_wnids
         self.current_scene = ''
         self.scene_list = scene_list
-        self.num_img_per_scene = int(self.num_img_total / len(self.scene_list))
 
         assert 0 < max_height <= 1.0, f"Invalid max height: {max_height}"
         assert 0 < occlusion <= 1.0, f"Invalid occlusion threshold: {occlusion}"
@@ -220,6 +219,28 @@ class ImageDataset(Controller):
                 for skybox in temp:
                     if skybox.location == "exterior" and skybox.sun_elevation >= 145:
                         self.skyboxes.append(skybox)
+        
+        if self.subset_wnids:
+            wnids = self.subset_wnids
+            for w in wnids:
+                # check if any models is usable
+                assert len([r for r in 
+                            Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w) 
+                            if not r.do_not_use]) > 0, f"ID: {w} do not have usable models"
+        else:
+            # Fetch the WordNet IDs.
+            wnids = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
+            # Remove any wnids that don't have valid models.
+            wnids = [w for w in wnids if len(
+                [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
+                if not r.do_not_use]) > 0]
+        
+        # list of all usable object catoegories wnids
+        self.wnids = wnids
+
+        # equal number of objects per scene, per category (wnid), but each wind has different number of models
+        self.num_img_per_scene = int(self.num_img_total / len(self.scene_list))
+        self.num_img_per_wnid = int(self.num_img_per_scene / len(self.wnids))
         
         # log dataset meta data
         self.generate_metadata()
@@ -284,8 +305,8 @@ class ImageDataset(Controller):
         """
 
         data = {"dataset": str(self.output_directory.resolve()),
-                "scene": [],
-                "num_img_per_scene": self.num_img_per_scene,
+                "scene_list": self.scene_list,
+                "num_img_total": self.num_img_total,
                 "materials": self.materials,
                 "hdri": self.skyboxes is not None,
                 "screen_width": self.screen_width,
@@ -308,34 +329,15 @@ class ImageDataset(Controller):
 
     def run(self, scene_name: str) -> None:
         """
-        Generate the dataset.
-
+        Generate the dataset for a single scene
         :param scene_name: The scene name.
         """
 
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(scene_name)
 
-        if self.subset_wnids:
-            wnids = self.subset_wnids
-            for w in wnids:
-                # check if any models is usable
-                assert len([r for r in 
-                            Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w) 
-                            if not r.do_not_use]) > 0, f"ID: {w} do not have usable models"
-        else:
-            # Fetch the WordNet IDs.
-            wnids = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
-            # Remove any wnids that don't have valid models.
-            wnids = [w for w in wnids if len(
-                [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                if not r.do_not_use]) > 0]
-
-        # Set the number of generated images per wnid.
-        num_img_per_wnid = int(self.num_img_per_scene / len(wnids))
-
         # Create the progress bar.
-        pbar = tqdm(total=len(wnids))
+        pbar = tqdm(total=len(self.wnids))
 
         done_models_path: Path = self.output_directory.joinpath(f"{scene_name}_processed_records.txt")
         # Get a list of models that have already been processed.
@@ -344,7 +346,7 @@ class ImageDataset(Controller):
             processed_model_names = done_models_path.read_text(encoding="utf-8").split("\n")
 
         # Iterate through each wnid.
-        for w, q in zip(wnids, range(len(wnids))):
+        for w, q in zip(self.wnids, range(len(self.wnids))):
             # Update the progress bar.
             pbar.set_description(w)
 
@@ -356,7 +358,7 @@ class ImageDataset(Controller):
             records = [r for r in records if r.name not in ['b02_bag', 'lantern_2010', 'b04_bottle_max']]
 
             # Get the numer of images per object model.
-            num_img_per_model = int(num_img_per_wnid / len(records))
+            num_img_per_model = int(self.num_img_per_wnid / len(records))
 
             # Process each record.
             fps = "nan"
