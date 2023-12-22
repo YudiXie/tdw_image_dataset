@@ -220,23 +220,27 @@ class ImageDataset(Controller):
                     if skybox.location == "exterior" and skybox.sun_elevation >= 145:
                         self.skyboxes.append(skybox)
         
+        self.wnid2models = {}
         if self.subset_wnids:
-            wnids = self.subset_wnids
-            for w in wnids:
-                # check if any models is usable
-                assert len([r for r in 
-                            Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w) 
-                            if not r.do_not_use]) > 0, f"ID: {w} do not have usable models"
+            # Fetch the WordNet IDs from the given subset
+            wnids_list = self.subset_wnids
+            for w in wnids_list:
+                wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
+                wnid_models = [r for r in wnid_models_raw if not r.do_not_use]
+                assert len(wnid_models) > 0, f"ID: {w} do not have usable models"
+                self.wnid2models[w] = wnid_models
         else:
             # Fetch the WordNet IDs.
-            wnids = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
-            # Remove any wnids that don't have valid models.
-            wnids = [w for w in wnids if len(
-                [r for r in Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                if not r.do_not_use]) > 0]
+            wnids_list = Controller.MODEL_LIBRARIANS[self.model_library_file].get_model_wnids()
+            # Remove any wnids in wnids_list that don't have valid models.
+            for w in wnids_list:
+                wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
+                wnid_models = [r for r in wnid_models_raw if not r.do_not_use]
+                if len(wnid_models) > 0:
+                    self.wnid2models[w] = wnid_models
         
         # list of all usable object catoegories wnids
-        self.wnids = wnids
+        self.wnids = list(self.wnid2models.keys())
 
         # equal number of objects per scene, per category (wnid), but each wind has different number of models
         self.num_img_per_scene = int(self.num_img_total / len(self.scene_list))
