@@ -224,7 +224,7 @@ class ImageDataset(Controller):
             wnids_list = self.subset_wnids
             for w in wnids_list:
                 wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                wnid_models = [r for r in wnid_models_raw if not r.do_not_use]
+                wnid_models = [r.name for r in wnid_models_raw if not r.do_not_use]
                 assert len(wnid_models) > 0, f"ID: {w} do not have usable models"
                 self.wnid2models[w] = wnid_models
         else:
@@ -233,7 +233,7 @@ class ImageDataset(Controller):
             # Remove any wnids in wnids_list that don't have valid models.
             for w in wnids_list:
                 wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                wnid_models = [r for r in wnid_models_raw if not r.do_not_use]
+                wnid_models = [r.name for r in wnid_models_raw if not r.do_not_use]
                 if len(wnid_models) > 0:
                     self.wnid2models[w] = wnid_models
         
