@@ -79,7 +79,9 @@ class ImageDataset(Controller):
         :param exterior_only: If True, only use exterior skyboxes (requires hdri == True)
         :param id_pass: If True, send and save the _id pass.
         :param do_zip: If True, zip the directory at the end.
-        :param num_img_total: The number of generated images for all scenes
+        :param num_img_total: The number of generated images for all scenes,
+            the generated image number will be close to this number but not exactly the same
+            to ensure that each model in the wnid category has the same number of images
         :param library: The path to the library records file.
         :param random_seed: The random seed.
         :param subset_wnids: create a subset only use these wnid categories.
@@ -149,10 +151,6 @@ class ImageDataset(Controller):
         If True, zip the directory at the end.
         """
         self.do_zip: bool = do_zip
-        """:field
-        The number of generated images
-        """
-        self.num_img_total: int = num_img_total
         """:field
         Restrict the agent from offset to the edge of the region.
         """
@@ -243,11 +241,50 @@ class ImageDataset(Controller):
         self.wnids = list(self.wnid2models.keys())
 
         # equal number of objects per scene, per category (wnid), but each wind has different number of models
-        self.num_img_per_scene = int(self.num_img_total / len(self.scene_list))
-        self.num_img_per_wnid = int(self.num_img_per_scene / len(self.wnids))
-        
+        num_img_per_scene = num_img_total / len(self.scene_list) # ~1.1M, if total num_img_total = 10M, 9 scenes
+        num_img_per_wnid = num_img_per_scene / len(self.wnids) # ~8680, if there are 128 wnids
+
+        # round the numbers so that all models in each wnid has the same number of images
+        self.wnid2num_img_per_model = {}
+        img_per_scene_round = 0
+        for w in self.wnids:
+            image_num = round(num_img_per_wnid / len(self.wnid2models[w])) # ~8680 if 1 model, ~4340 if 2 models
+            self.wnid2num_img_per_model[w] = image_num
+            img_per_scene_round += image_num * len(self.wnid2models[w])
+
+        self.num_img_per_scene = img_per_scene_round
+        self.num_img_total = self.num_img_per_scene * len(self.scene_list)
+
+        self.generate_index()
+
         # log dataset meta data
         self.generate_metadata()
+
+    def generate_index(self) -> None:
+        """
+        Generate a index file for this dataset.
+        """
+        scene_col = []
+        for scene in self.scene_list:
+            scene_col.extend([scene, ] * self.num_img_per_scene)
+        
+        wnid_col_per_scene = []
+        model_col_per_scene = []
+        for w in self.wnids:
+            wnid_col_per_scene.extend([w, ] * (self.wnid2num_img_per_model[w] * len(self.wnid2models[w])))
+            for r in self.wnid2models[w]:
+                model_col_per_scene.extend([r, ] * self.wnid2num_img_per_model[w])
+        wnid_col = wnid_col_per_scene * len(self.scene_list)
+        model_col = model_col_per_scene * len(self.scene_list)
+
+        assert len(scene_col) == len(wnid_col) == len(model_col) == self.num_img_total
+
+        index_df = pd.DataFrame({
+            'scene': scene_col,
+            'wnid': wnid_col,
+            'model': model_col,
+        })
+        index_df.to_csv(str(self.output_directory.joinpath('index.csv').resolve()))
 
     def initialize_scene(self, scene_name) -> SceneBounds:
         """
