@@ -386,7 +386,6 @@ class ImageDataset(Controller):
         if do_zip:
             ImageDataset.zip_images(self.output_directory)
 
-
     def generate_single_scene(self, scene_name: str) -> None:
         """
         Generate the dataset for a single scene
@@ -453,7 +452,6 @@ class ImageDataset(Controller):
 
         # Don't need to unload the scene here since loading a new scene 
         # will automatically unload the old one, should doulbe check this
-
 
     def _set_skybox(self) -> Optional[dict]:
         """
