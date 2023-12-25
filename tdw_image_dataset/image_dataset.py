@@ -264,28 +264,53 @@ class ImageDataset(Controller):
         """
         Generate a index file for this dataset.
         """
-        scene_col = []
-        for scene in self.scene_list:
-            scene_col.extend([scene, ] * self.num_img_per_scene)
-        
-        wnid_col_per_scene = []
-        model_col_per_scene = []
-        for w in self.wnids:
-            wnid_col_per_scene.extend([w, ] * (self.wnid2num_img_per_model[w] * len(self.wnid2models[w])))
-            for r in self.wnid2models[w]:
-                model_col_per_scene.extend([r, ] * self.wnid2num_img_per_model[w])
-        wnid_col = wnid_col_per_scene * len(self.scene_list)
-        model_col = model_col_per_scene * len(self.scene_list)
+        self.index_file_n = str(self.output_directory.joinpath(f'index_img_{self.num_img_total}.csv').resolve())
+        if os.path.exists(self.index_file_n):
+            print(f"index file {self.index_file_n} already exists, skip generating index file")
+        else:
+            scene_col = []
+            for scene in self.scene_list:
+                scene_col.extend([scene, ] * self.num_img_per_scene)
+            
+            wnid_col_per_scene = []
+            model_col_per_scene = []
+            for w in self.wnids:
+                wnid_col_per_scene.extend([w, ] * (self.wnid2num_img_per_model[w] * len(self.wnid2models[w])))
+                for r in self.wnid2models[w]:
+                    model_col_per_scene.extend([r, ] * self.wnid2num_img_per_model[w])
+            wnid_col = wnid_col_per_scene * len(self.scene_list)
+            model_col = model_col_per_scene * len(self.scene_list)
 
-        assert len(scene_col) == len(wnid_col) == len(model_col) == self.num_img_total
+            assert len(scene_col) == len(wnid_col) == len(model_col) == self.num_img_total
 
-        index_df = pd.DataFrame({
-            'scene': scene_col,
-            'wnid': wnid_col,
-            'model': model_col,
-        })
-        index_df.to_csv(str(self.output_directory.joinpath('index.csv').resolve()))
+            index_df = pd.DataFrame({
+                'scene': scene_col,
+                'wnid': wnid_col,
+                'model': model_col,
+            })
+            index_df.to_csv(self.index_file_n)
 
+    def generate_metadata(self) -> None:
+        """
+        Generate a metadata file for this dataset.
+        """
+        data = {"dataset": str(self.output_directory.resolve()),
+                "scene_list": self.scene_list,
+                "num_img_total": self.num_img_total,
+                "materials": self.materials,
+                "hdri": self.skyboxes is not None,
+                "screen_width": self.screen_width,
+                "screen_height": self.screen_height,
+                "output_scale": self.scale,
+                "clamp_rotation": self.clamp_rotation,
+                "show_objects": self.show_objects,
+                "max_height": self.max_height,
+                "occlusion": self.occlusion,
+                "less_dark": self.less_dark,
+                "exterior_only": self.exterior_only,
+                "start": datetime.now().strftime("%H:%M %d.%m.%y")}
+        self.metadata_path.write_text(json.dumps(data, sort_keys=True, indent=4))
+    
     def initialize_scene(self, scene_name) -> SceneBounds:
         """
         Initialize the scene.
@@ -339,28 +364,6 @@ class ImageDataset(Controller):
         # Send the commands.
         resp = self.communicate(commands)
         return SceneBounds(resp)
-
-    def generate_metadata(self) -> None:
-        """
-        Generate a metadata file for this dataset.
-        """
-
-        data = {"dataset": str(self.output_directory.resolve()),
-                "scene_list": self.scene_list,
-                "num_img_total": self.num_img_total,
-                "materials": self.materials,
-                "hdri": self.skyboxes is not None,
-                "screen_width": self.screen_width,
-                "screen_height": self.screen_height,
-                "output_scale": self.scale,
-                "clamp_rotation": self.clamp_rotation,
-                "show_objects": self.show_objects,
-                "max_height": self.max_height,
-                "occlusion": self.occlusion,
-                "less_dark": self.less_dark,
-                "exterior_only": self.exterior_only,
-                "start": datetime.now().strftime("%H:%M %d.%m.%y")}
-        self.metadata_path.write_text(json.dumps(data, sort_keys=True, indent=4))
 
     def run_multi_scene(self) -> None:
         num_scene = len(self.scene_list)
