@@ -26,16 +26,8 @@ if __name__ == "__main__":
                      output_directory=output_dir,
                      materials=False,
                      launch_build=True, # for local machine
-                     do_zip=False,
-                     terminate_build=False,
                      scene_list=scenes,
                      )
 
     # Generate a "partial" dataset per scene.
     c.generate_multi_scene()
-
-    # Terminate the build.
-    c.communicate({"$type": "terminate"})
-
-    # Zip.
-    # c.zip_images()

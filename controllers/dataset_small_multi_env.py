@@ -37,16 +37,8 @@ if __name__ == "__main__":
                      materials=False,
                      launch_build=True, # for local machine
                      subset_wnids=subset_ids, # only 8 categories
-                     do_zip=False,
-                     terminate_build=False,
                      scene_list=scenes,
                      )
 
     # Generate a "partial" dataset per scene.
     c.generate_multi_scene()
-
-    # Terminate the build.
-    c.communicate({"$type": "terminate"})
-
-    # Zip.
-    # c.zip_images()

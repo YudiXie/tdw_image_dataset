@@ -36,6 +36,8 @@ class ImageDataset(Controller):
     The ID of the avatar.
     """
     AVATAR_ID: str = "a"
+    # models that have multiple objects are removed from generation
+    MULTI_OBJ_MODELS = ['b02_bag', 'lantern_2010', 'b04_bottle_max']
 
     def __init__(self,
                  output_directory: Union[str, Path],
@@ -53,13 +55,11 @@ class ImageDataset(Controller):
                  less_dark: bool = True,
                  exterior_only: bool = True,
                  id_pass: bool = False,
-                 do_zip: bool = True,
                  num_img_total: int = 5000,
                  library: str = "models_core.json",
                  random_seed: int = 0,
                  subset_wnids: Optional[List[str]] = None,
                  offset: float = 0.0,
-                 terminate_build: bool = True,
                  scene_list = ['building_site', ],
                  ):
         """
@@ -78,7 +78,6 @@ class ImageDataset(Controller):
         :param less_dark: If True, there will be more daylight exterior skyboxes (requires hdri == True)
         :param exterior_only: If True, only use exterior skyboxes (requires hdri == True)
         :param id_pass: If True, send and save the _id pass.
-        :param do_zip: If True, zip the directory at the end.
         :param num_img_total: The number of generated images for all scenes,
             the generated image number will be close to this number but not exactly the same
             to ensure that each model in the wnid category has the same number of images
@@ -86,7 +85,6 @@ class ImageDataset(Controller):
         :param random_seed: The random seed.
         :param subset_wnids: create a subset only use these wnid categories.
         :param offset: Restrict the agent from offset to the edge of the region.
-        :param terminate_build: If True, terminate the build when one scene is done.
         """
 
         global RNG
@@ -148,17 +146,9 @@ class ImageDataset(Controller):
         """
         self.id_pass: bool = id_pass
         """:field
-        If True, zip the directory at the end.
-        """
-        self.do_zip: bool = do_zip
-        """:field
         Restrict the agent from offset to the edge of the region.
         """
         self.offset = offset
-        """:field
-        If True, terminate the build when one scene is done.
-        """
-        self.terminate_build = terminate_build
 
         self.subset_wnids = subset_wnids
         self.current_scene = ''
@@ -224,7 +214,7 @@ class ImageDataset(Controller):
             wnids_list = self.subset_wnids
             for w in wnids_list:
                 wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                wnid_models = [r.name for r in wnid_models_raw if not r.do_not_use]
+                wnid_models = [r for r in wnid_models_raw if ((not r.do_not_use) and (r.name not in self.MULTI_OBJ_MODELS))]
                 assert len(wnid_models) > 0, f"ID: {w} do not have usable models"
                 self.wnid2models[w] = wnid_models
         else:
@@ -233,7 +223,7 @@ class ImageDataset(Controller):
             # Remove any wnids in wnids_list that don't have valid models.
             for w in wnids_list:
                 wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                wnid_models = [r.name for r in wnid_models_raw if not r.do_not_use]
+                wnid_models = [r for r in wnid_models_raw if ((not r.do_not_use) and (r.name not in self.MULTI_OBJ_MODELS))]
                 if len(wnid_models) > 0:
                     self.wnid2models[w] = wnid_models
         
@@ -263,6 +253,11 @@ class ImageDataset(Controller):
     def generate_index(self) -> None:
         """
         Generate a index file for this dataset.
+        The generated index has self.num_img_total rows, each row is an image
+        each scence has equal number of images, self.num_img_per_scene
+        each wnid has roughly equal number of images, self.wnid2num_img_per_model[w] * len(self.wnid2models[w])
+        each model under the same wnid has the same number of images, self.wnid2num_img_per_model[w]
+        models under different wnids have different number of images
         """
         self.index_file_n = str(self.output_directory.joinpath(f'index_img_{self.num_img_total}.csv').resolve())
         if os.path.exists(self.index_file_n):
@@ -277,7 +272,7 @@ class ImageDataset(Controller):
             for w in self.wnids:
                 wnid_col_per_scene.extend([w, ] * (self.wnid2num_img_per_model[w] * len(self.wnid2models[w])))
                 for r in self.wnid2models[w]:
-                    model_col_per_scene.extend([r, ] * self.wnid2num_img_per_model[w])
+                    model_col_per_scene.extend([r.name, ] * self.wnid2num_img_per_model[w])
             wnid_col = wnid_col_per_scene * len(self.scene_list)
             model_col = model_col_per_scene * len(self.scene_list)
 
@@ -365,17 +360,49 @@ class ImageDataset(Controller):
         resp = self.communicate(commands)
         return SceneBounds(resp)
 
-    def generate_multi_scene(self) -> None:
+    def generate_multi_scene(self, do_zip=False) -> None:
+
+        done_scenes_path: Path = self.output_directory.joinpath(f"processed_scenes.txt")
+        processed_scenes_names: List[str] = []
+        if done_scenes_path.exists():
+            processed_scenes_names = done_scenes_path.read_text(encoding="utf-8").split("\n")
+        
         num_scene = len(self.scene_list)
         for scene, i in zip(self.scene_list, range(num_scene)):
-            print(f"{scene}\t{i + 1}/{num_scene}")
+            if scene in processed_scenes_names:
+                print(f"Scene: {scene} already processed, skip")
+                continue
+
+            print(f"Generating: {scene}\t{i + 1}/{num_scene}")
             self.generate_single_scene(scene_name=scene)
+            
+            # Mark this scene as processed.
+            with done_scenes_path.open("at") as f:
+                f.write(f"\n{scene}")
+        
+        self.communicate({"$type": "terminate"})
+
+        # Zip the images.
+        if do_zip:
+            self.zip_images()
+
 
     def generate_single_scene(self, scene_name: str) -> None:
         """
         Generate the dataset for a single scene
         :param scene_name: The scene name.
         """
+
+        scene_num = self.scene_list.index(scene_name)
+        # read index for this scene, skip the first row which contains the column names
+        self.scene_index = pd.read_csv(self.index_file_n,
+                                       names=['scene', 'wnid', 'model'],
+                                       index_col=0,
+                                       skiprows=1 + scene_num * self.num_img_per_scene, 
+                                       nrows=self.num_img_per_scene)
+        # check if the index is correct
+        unique_scenes = self.scene_index['scene'].unique()
+        assert len(unique_scenes) == 1 and unique_scenes[0] == scene_name, "scene name mismatch"
 
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(scene_name)
@@ -390,20 +417,13 @@ class ImageDataset(Controller):
             processed_model_names = done_models_path.read_text(encoding="utf-8").split("\n")
 
         # Iterate through each wnid.
-        for w, q in zip(self.wnids, range(len(self.wnids))):
+        for w in self.wnids:
             # Update the progress bar.
             pbar.set_description(w)
+            self.wnid_index = self.scene_index[self.scene_index['wnid'] == w]
 
             # Get all valid models in the wnid.
-            records = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-            records = [r for r in records if not r.do_not_use]
-
-            # Remove models that have multiple objects
-            records = [r for r in records if r.name not in ['b02_bag', 'lantern_2010', 'b04_bottle_max']]
-
-            # Get the numer of images per object model.
-            # TODO: need work here
-            num_img_per_model = int(self.num_img_per_wnid / len(records))
+            records = self.wnid2models[w]
 
             # Process each record.
             fps = "nan"
@@ -416,23 +436,13 @@ class ImageDataset(Controller):
                     continue
 
                 # Create all of the images for this model.
-                dt = self.process_model(record, scene_bounds, num_img_per_model, w)
-                fps = round(num_img_per_model / dt)
+                fps = self.process_model(record, scene_bounds, w)
 
                 # Mark this record as processed.
                 with done_models_path.open("at") as f:
                     f.write(f"\n{record.name}")
             pbar.update(1)
         pbar.close()
-
-        # aggregate the image meta files
-        # df_csv_concat = pd.concat(
-        #     [pd.read_csv(str(p), index_col=0) for p in self.images_meta_directory.iterdir()], 
-        #     ignore_index=True)
-        # df_csv_concat.to_csv(str(self.output_directory.joinpath('images_meta.csv').resolve()))
-        # # save a shuffled manifest
-        # shuffled_df = df_csv_concat.sample(frac=1, random_state=RNG).reset_index(drop=True)
-        # shuffled_df.to_csv(str(self.output_directory.joinpath('images_meta_shuffled.csv').resolve()))
 
         # Add the end time to the metadata file.
         metadata = json.loads(self.metadata_path.read_text())
@@ -441,12 +451,9 @@ class ImageDataset(Controller):
         metadata['scene'].append(self.current_scene)
         self.metadata_path.write_text(json.dumps(metadata, sort_keys=True, indent=4))
 
-        # Terminate the build.
-        if self.terminate_build:
-            self.communicate({"$type": "terminate"})
-        # Zip up the images.
-        if self.do_zip:
-            self.zip_images()
+        # Don't need to unload the scene here since loading a new scene 
+        # will automatically unload the old one, should doulbe check this
+
 
     def _set_skybox(self) -> Optional[dict]:
         """
@@ -470,19 +477,23 @@ class ImageDataset(Controller):
                 self.skybox_idx = 0
         return command
 
-    def process_model(self, record: ModelRecord, scene_bounds: SceneBounds, img_count_per_model: int, wnid: str) -> float:
+    def process_model(self, record: ModelRecord, scene_bounds: SceneBounds, wnid: str) -> float:
         """
         Capture images of a model.
 
         :param record: The model record.
         :param scene_bounds: The bounds of the scene.
-        :param img_count_per_model: Number of images for this model in one scene.
         :param wnid: The wnid of the record.
-        :return The time elapsed.
+        :return The rendering fps for the current model.
         """
 
-        # the index of images generated for this model in this scene
-        image_count = 0
+        self.model_index = self.wnid_index[self.wnid_index['model'] == record.name]
+        img_count_per_model = len(self.model_index)
+        assert img_count_per_model == self.wnid2num_img_per_model[wnid], "image count mismatch"
+
+        # the first index of images generated for this model in this scene
+        assert self.model_index.index[-1] - self.model_index.index[0] + 1 == img_count_per_model, 'indexes should be squential'
+        image_index = self.model_index.index[0]
 
         image_positions: List[ImagePosition] = []
         o_id = self.get_unique_id()
@@ -576,7 +587,7 @@ class ImageDataset(Controller):
             resp = self.communicate(commands)
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, self.current_scene, wnid, record.name, image_count))
+            t = Thread(target=self.save_image, args=(resp, self.current_scene, wnid, record.name, image_index))
             t.daemon = True
             t.start()
 
@@ -620,7 +631,7 @@ class ImageDataset(Controller):
                 'wnid': wnid,
                 'record_wcategory': record.wcategory,
                 'record_name': record.name,
-                'image_file_name': f"img_{image_count:010d}",
+                'image_file_name': f"img_{image_index:010d}",
                 'skybox_name': skybox_name,
                 'ty': ty, # up-down position, center of image is 0, unit in pixels
                 'tz': tz, # left-right position, center of image is 0, unit in pixels
@@ -643,11 +654,11 @@ class ImageDataset(Controller):
                 'object_rot_z': p.object_rotation['z'],
                 'object_rot_w': p.object_rotation['w'],
             }
-            t2 = Thread(target=self.save_meta, args=(save_dict, self.current_scene, wnid, record.name, image_count))
+            t2 = Thread(target=self.save_meta, args=(save_dict, self.current_scene, wnid, record.name, image_index))
             t2.daemon = True
             t2.start()
 
-            image_count += 1
+            image_index += 1
             
         t1 = time()
 
@@ -659,7 +670,7 @@ class ImageDataset(Controller):
                           {"$type": "destroy_object",
                            "id": o_id},
                           {"$type": "unload_asset_bundles"}])
-        return t1 - t0
+        return round(img_count_per_model / (t1 - t0))
 
     def get_object_initialization_commands(self, record: ModelRecord, o_id: int) -> List[dict]:
         """
@@ -694,13 +705,13 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, scene_name: str, wnid: str, record_name: str, image_count: int) -> None:
+    def save_image(self, resp, scene_name: str, wnid: str, record_name: str, image_index: int) -> None:
         """
         Save an image.
 
         :param resp: The raw response data.
         :param record: The model record.
-        :param image_count: The image count.
+        :param image_index: The image index.
         :param wnid: The wnid.
         """
 
@@ -714,7 +725,7 @@ class ImageDataset(Controller):
                 pass
 
         # Save the image.
-        filename = f"img_{image_count:010d}"
+        filename = f"img_{image_index:010d}"
 
         # Save the image without resizing.
         if not self.scale:
@@ -727,7 +738,7 @@ class ImageDataset(Controller):
                                  resize_to=self.output_size)
     
 
-    def save_meta(self, save_dict: dict, scene_name: str, wnid: str, record_name: str, image_count: int) -> None:
+    def save_meta(self, save_dict: dict, scene_name: str, wnid: str, record_name: str, image_index: int) -> None:
         # Get the directory.
         directory: Path = self.images_directory.joinpath(scene_name).joinpath(wnid).joinpath(record_name)
         if directory.exists():
@@ -742,7 +753,7 @@ class ImageDataset(Controller):
             new_save_dict[k] = [v, ]
         
         save_df = pd.DataFrame.from_dict(new_save_dict)
-        csv_path = directory.joinpath(f"img_{image_count:010d}_info.csv")
+        csv_path = directory.joinpath(f"img_{image_index:010d}_info.csv")
         save_df.to_csv(str(csv_path.resolve()), header=False, index=False)
 
 
