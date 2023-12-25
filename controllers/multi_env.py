@@ -24,18 +24,14 @@ if __name__ == "__main__":
               "abandoned_factory"]
     train = int(1300000 / len(scenes))
     val = int(50000 / len(scenes))
-    c = ImageDataset(new=True,
-                     clamp_rotation=True,
-                     less_dark=True,
-                     hdri=True,
-                     overwrite=False,
-                     max_height=0.5,
-                     occlusion=0.45,
-                     train=train,
+    c = ImageDataset(train=train,
                      val=val,
                      do_zip=False,
+                     materials=True,
                      library=args.library,
-                     output_directory=args.dir)
+                     output_directory=args.dir,
+                     terminate_build=False,
+                     )
 
     # Generate a "partial" dataset per scene.
     for scene, i in zip(scenes, range(len(scenes))):
@@ -44,5 +40,6 @@ if __name__ == "__main__":
     # Terminate the build.
     c.communicate({"$type": "terminate"})
 
+    # potentially this is a bug
     # Zip.
     ImageDataset.zip_images(Path(args.dir))
