@@ -43,7 +43,7 @@ if __name__ == "__main__":
                      )
 
     # Generate a "partial" dataset per scene.
-    c.run_multi_scene()
+    c.generate_multi_scene()
 
     # Terminate the build.
     c.communicate({"$type": "terminate"})

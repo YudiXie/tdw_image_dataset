@@ -365,13 +365,13 @@ class ImageDataset(Controller):
         resp = self.communicate(commands)
         return SceneBounds(resp)
 
-    def run_multi_scene(self) -> None:
+    def generate_multi_scene(self) -> None:
         num_scene = len(self.scene_list)
         for scene, i in zip(self.scene_list, range(num_scene)):
             print(f"{scene}\t{i + 1}/{num_scene}")
-            self.run(scene_name=scene)
+            self.generate_single_scene(scene_name=scene)
 
-    def run(self, scene_name: str) -> None:
+    def generate_single_scene(self, scene_name: str) -> None:
         """
         Generate the dataset for a single scene
         :param scene_name: The scene name.
@@ -402,6 +402,7 @@ class ImageDataset(Controller):
             records = [r for r in records if r.name not in ['b02_bag', 'lantern_2010', 'b04_bottle_max']]
 
             # Get the numer of images per object model.
+            # TODO: need work here
             num_img_per_model = int(self.num_img_per_wnid / len(records))
 
             # Process each record.
