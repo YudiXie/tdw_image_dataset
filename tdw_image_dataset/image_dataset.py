@@ -384,7 +384,7 @@ class ImageDataset(Controller):
 
         # Zip the images.
         if do_zip:
-            self.zip_images()
+            ImageDataset.zip_images(self.output_directory)
 
 
     def generate_single_scene(self, scene_name: str) -> None:
@@ -922,19 +922,20 @@ class ImageDataset(Controller):
         vec /= np.linalg.norm(vec, axis=0)
         return np.array([vec[0][0], vec[1][0], vec[2][0]])
 
-    def zip_images(self) -> None:
+    @staticmethod
+    def zip_images(output_directory: Path) -> None:
         """
         Zip up the images.
         """
 
         # Use a random token to avoid overwriting zip files.
         token = token_urlsafe(4)
-        zip_path = self.output_directory.parent.joinpath(f"images_{token}.zip")
+        zip_path = output_directory.parent.joinpath(f"images_{token}.zip")
 
         # Source: https://thispointer.com/python-how-to-create-a-zip-archive-from-multiple-files-or-directory/
         with ZipFile(str(zip_path.resolve()), 'w') as zip_obj:
             # Iterate over all the files in directory
-            for folderName, subfolders, filenames in os.walk(str(self.output_directory.resolve())):
+            for folderName, subfolders, filenames in os.walk(str(output_directory.resolve())):
                 for filename in filenames:
                     if filename == '.DS_Store':
                         continue
@@ -943,4 +944,4 @@ class ImageDataset(Controller):
                     # Add file to zip
                     zip_obj.write(file_path, os.path.basename(file_path))
         # Remove the original images.
-        dir_util.remove_tree(str(self.output_directory.resolve()))
+        dir_util.remove_tree(str(output_directory.resolve()))
