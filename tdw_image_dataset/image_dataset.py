@@ -447,7 +447,7 @@ class ImageDataset(Controller):
         metadata = json.loads(self.metadata_path.read_text())
         end_time = datetime.now().strftime("%H:%M %d.%m.%y")
         metadata.update({"end": end_time})
-        metadata['scene'].append(self.current_scene)
+        metadata['scene_list'].append(self.current_scene)
         self.metadata_path.write_text(json.dumps(metadata, sort_keys=True, indent=4))
 
         # Don't need to unload the scene here since loading a new scene 
