@@ -38,6 +38,35 @@ class ImageDataset(Controller):
     AVATAR_ID: str = "a"
     # models that have multiple objects are removed from generation
     MULTI_OBJ_MODELS = ['b02_bag', 'lantern_2010', 'b04_bottle_max']
+    # The headers of the metadata file.
+    IMG_META_HEADERS = (
+        'scene_name',
+        'wnid',
+        'record_wcategory',
+        'record_name',
+        'image_file_name',
+        'skybox_name',
+        'ty', # up-down position, center of image is 0, unit in pixels
+        'tz', # left-right position, center of image is 0, unit in pixels
+        'neg_x', # depth of object, unit in 3D space in TDW
+        'euler_1',
+        'euler_2',
+        'euler_3',
+        'avatar_pos_x',
+        'avatar_pos_y',
+        'avatar_pos_z',
+        'camera_rot_x',
+        'camera_rot_y',
+        'camera_rot_z',
+        'camera_rot_w',
+        'object_pos_x',
+        'object_pos_y',
+        'object_pos_z',
+        'object_rot_x',
+        'object_rot_y',
+        'object_rot_z',
+        'object_rot_w',
+    )
 
     def __init__(self,
                  output_directory: Union[str, Path],
@@ -305,6 +334,10 @@ class ImageDataset(Controller):
                 "exterior_only": self.exterior_only,
                 "start": datetime.now().strftime("%H:%M %d.%m.%y")}
         self.metadata_path.write_text(json.dumps(data, sort_keys=True, indent=4))
+
+        # save the meta headers into a file
+        img_meta_headers_path = self.output_directory.joinpath(f"img_meta_headers.txt")
+        img_meta_headers_path.write_text("\n".join(self.IMG_META_HEADERS))
     
     def initialize_scene(self, scene_name) -> SceneBounds:
         """
@@ -624,34 +657,37 @@ class ImageDataset(Controller):
                     relative_euler = obj_ltransforms.get_euler_angles(0)
             assert has_scre and has_ltra, "missing screen position or local transform"
 
-            save_dict = {
-                'scene_name': self.current_scene,
-                'wnid': wnid,
-                'record_wcategory': record.wcategory,
-                'record_name': record.name,
-                'image_file_name': f"img_{image_index:010d}",
-                'skybox_name': skybox_name,
-                'ty': ty, # up-down position, center of image is 0, unit in pixels
-                'tz': tz, # left-right position, center of image is 0, unit in pixels
-                'neg_x': neg_x, # depth of object, unit in 3D space in TDW
-                'euler_1': relative_euler[0],
-                'euler_2': relative_euler[1],
-                'euler_3': relative_euler[2],
-                'avatar_pos_x': p.avatar_position['x'],
-                'avatar_pos_y': p.avatar_position['y'],
-                'avatar_pos_z': p.avatar_position['z'],
-                'camera_rot_x': p.camera_rotation['x'],
-                'camera_rot_y': p.camera_rotation['y'],
-                'camera_rot_z': p.camera_rotation['z'],
-                'camera_rot_w': p.camera_rotation['w'],
-                'object_pos_x': p.object_position['x'],
-                'object_pos_y': p.object_position['y'],
-                'object_pos_z': p.object_position['z'],
-                'object_rot_x': p.object_rotation['x'],
-                'object_rot_y': p.object_rotation['y'],
-                'object_rot_z': p.object_rotation['z'],
-                'object_rot_w': p.object_rotation['w'],
-            }
+            save_tuple = (
+                self.current_scene,
+                wnid,
+                record.wcategory,
+                record.name,
+                f"img_{image_index:010d}",
+                skybox_name,
+                ty,
+                tz,
+                neg_x,
+                relative_euler[0],
+                relative_euler[1],
+                relative_euler[2],
+                p.avatar_position['x'],
+                p.avatar_position['y'],
+                p.avatar_position['z'],
+                p.camera_rotation['x'],
+                p.camera_rotation['y'],
+                p.camera_rotation['z'],
+                p.camera_rotation['w'],
+                p.object_position['x'],
+                p.object_position['y'],
+                p.object_position['z'],
+                p.object_rotation['x'],
+                p.object_rotation['y'],
+                p.object_rotation['z'],
+                p.object_rotation['w'],
+            )
+            assert len(save_tuple) == len(self.IMG_META_HEADERS), "save tuple length mismatch"
+            save_dict = {k: v for k, v in zip(self.IMG_META_HEADERS, save_tuple)}
+
             t2 = Thread(target=self.save_meta, args=(save_dict, self.current_scene, wnid, record.name, image_index))
             t2.daemon = True
             t2.start()
