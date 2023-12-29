@@ -15,10 +15,13 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--directory', default='', help='the directory to save the dataset to')
     args = parser.parse_args()
 
+    dataset_folder = "tdw_image_dataset_small_multi_env_hdri"
+
     if args.directory != '':
-        output_dir = Path(args.directory)
+        output_dir = Path(args.directory).joinpath(dataset_folder)
     else:
-        output_dir = Path.home().joinpath("tdw_image_dataset_small_multi_env_hdri")
+        output_dir = Path.home().joinpath(dataset_folder)
+    
     subset_ids = [
         'n02774152', # 'bag, handbag, pocketbook, purse’, 12 records
         'n02933112', # 'cabinet’, 33 records

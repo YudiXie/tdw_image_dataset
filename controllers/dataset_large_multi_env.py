@@ -15,10 +15,12 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--directory', default='', help='the directory to save the dataset to')
     args = parser.parse_args()
 
+    dataset_folder = "tdw_image_dataset_large"
+
     if args.directory != '':
-        output_dir = Path(args.directory)
+        output_dir = Path(args.directory).joinpath(dataset_folder)
     else:
-        output_dir = Path.home().joinpath("tdw_image_dataset_large")
+        output_dir = Path.home().joinpath(dataset_folder)
 
     scenes = [
               "building_site",
