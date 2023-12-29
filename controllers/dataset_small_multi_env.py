@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 from tdw_image_dataset.image_dataset import ImageDataset
 
@@ -10,7 +11,14 @@ multiple scenes
 
 
 if __name__ == "__main__":
-    output_dir = Path.home().joinpath("tdw_image_dataset_small_multi_env_hdri")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--directory', default='', help='the directory to save the dataset to')
+    args = parser.parse_args()
+
+    if args.directory != '':
+        output_dir = Path(args.directory)
+    else:
+        output_dir = Path.home().joinpath("tdw_image_dataset_small_multi_env_hdri")
     subset_ids = [
         'n02774152', # 'bag, handbag, pocketbook, purse’, 12 records
         'n02933112', # 'cabinet’, 33 records
