@@ -517,6 +517,9 @@ class ImageDataset(Controller):
         :param wnid: The wnid of the record.
         :return The rendering fps for the current model.
         """
+        # create folder for this model
+        out_path = self.images_directory.joinpath(self.current_scene).joinpath(wnid).joinpath(record.name)
+        out_path.mkdir(parents=True, exist_ok=True)
 
         self.model_index = self.wnid_index[self.wnid_index['model'] == record.name]
         img_count_per_model = len(self.model_index)
@@ -618,7 +621,7 @@ class ImageDataset(Controller):
             resp = self.communicate(commands)
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, self.current_scene, wnid, record.name, image_index))
+            t = Thread(target=self.save_image, args=(resp, out_path, image_index))
             t.daemon = True
             t.start()
 
@@ -688,7 +691,7 @@ class ImageDataset(Controller):
             assert len(save_tuple) == len(self.IMG_META_HEADERS), "save tuple length mismatch"
             save_dict = {k: v for k, v in zip(self.IMG_META_HEADERS, save_tuple)}
 
-            t2 = Thread(target=self.save_meta, args=(save_dict, self.current_scene, wnid, record.name, image_index))
+            t2 = Thread(target=self.save_meta, args=(save_dict, out_path, image_index))
             t2.daemon = True
             t2.start()
 
@@ -739,7 +742,7 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, scene_name: str, wnid: str, record_name: str, image_index: int) -> None:
+    def save_image(self, resp, output_directory: Path, image_index: int) -> None:
         """
         Save an image.
 
@@ -749,45 +752,27 @@ class ImageDataset(Controller):
         :param wnid: The wnid.
         """
 
-        # Get the directory.
-        directory: Path = self.images_directory.joinpath(scene_name).joinpath(wnid).joinpath(record_name)
-        if directory.exists():
-            # Try to make the directories. Due to threading, they might already be made.
-            try:
-                directory.mkdir(parents=True)
-            except OSError:
-                pass
-
         # Save the image.
         filename = f"img_{image_index:010d}"
 
         # Save the image without resizing.
         if not self.scale:
             TDWUtils.save_images(Images(resp[0]), filename,
-                                 output_directory=directory)
+                                 output_directory=output_directory)
         # Resize the image and save it.
         else:
             TDWUtils.save_images(Images(resp[0]), filename,
-                                 output_directory=directory,
+                                 output_directory=output_directory,
                                  resize_to=self.output_size)
     
 
-    def save_meta(self, save_dict: dict, scene_name: str, wnid: str, record_name: str, image_index: int) -> None:
-        # Get the directory.
-        directory: Path = self.images_directory.joinpath(scene_name).joinpath(wnid).joinpath(record_name)
-        if directory.exists():
-            # Try to make the directories. Due to threading, they might already be made.
-            try:
-                directory.mkdir(parents=True)
-            except OSError:
-                pass
-        
+    def save_meta(self, save_dict: dict, output_directory: Path, image_index: int) -> None:
         new_save_dict = {}
         for k, v in save_dict.items():
             new_save_dict[k] = [v, ]
         
         save_df = pd.DataFrame.from_dict(new_save_dict)
-        csv_path = directory.joinpath(f"img_{image_index:010d}_info.csv")
+        csv_path = output_directory.joinpath(f"img_{image_index:010d}_info.csv")
         save_df.to_csv(str(csv_path.resolve()), header=False, index=False)
 
 
