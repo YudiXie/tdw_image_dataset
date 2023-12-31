@@ -618,12 +618,7 @@ class ImageDataset(Controller):
                 # commands.append({"$type": "rotate_hdri_skybox_by",
                 #                  "angle": RNG.uniform(0, 360)})
 
-            resp = self.communicate(commands)
-
-            # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(resp, out_path, image_index))
-            t.daemon = True
-            t.start()
+            img_resp = self.communicate(commands)
 
             # instruct the build to send screen position of the object
             # the position is likely the bottom center of the object
@@ -691,9 +686,10 @@ class ImageDataset(Controller):
             assert len(save_tuple) == len(self.IMG_META_HEADERS), "save tuple length mismatch"
             save_dict = {k: v for k, v in zip(self.IMG_META_HEADERS, save_tuple)}
 
-            t2 = Thread(target=self.save_meta, args=(save_dict, out_path, image_index))
-            t2.daemon = True
-            t2.start()
+            # Create a thread to save the image.
+            t = Thread(target=self.save_image, args=(img_resp, save_dict, out_path, image_index))
+            t.daemon = True
+            t.start()
 
             image_index += 1
             
@@ -742,11 +738,12 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, output_directory: Path, image_index: int) -> None:
+    def save_image(self, resp, save_dict: dict, output_directory: Path, image_index: int) -> None:
         """
         Save an image.
 
         :param resp: The raw response data.
+        :param save_dict: The metadata to save.
         :param record: The model record.
         :param image_index: The image index.
         :param wnid: The wnid.
@@ -754,6 +751,14 @@ class ImageDataset(Controller):
 
         # Save the image.
         filename = f"img_{image_index:010d}"
+
+        new_save_dict = {}
+        for k, v in save_dict.items():
+            new_save_dict[k] = [v, ]
+        
+        save_df = pd.DataFrame.from_dict(new_save_dict)
+        csv_path = output_directory.joinpath(filename + "_info.csv")
+        save_df.to_csv(str(csv_path.resolve()), header=False, index=False)
 
         # Save the image without resizing.
         if not self.scale:
@@ -764,17 +769,6 @@ class ImageDataset(Controller):
             TDWUtils.save_images(Images(resp[0]), filename,
                                  output_directory=output_directory,
                                  resize_to=self.output_size)
-    
-
-    def save_meta(self, save_dict: dict, output_directory: Path, image_index: int) -> None:
-        new_save_dict = {}
-        for k, v in save_dict.items():
-            new_save_dict[k] = [v, ]
-        
-        save_df = pd.DataFrame.from_dict(new_save_dict)
-        csv_path = output_directory.joinpath(f"img_{image_index:010d}_info.csv")
-        save_df.to_csv(str(csv_path.resolve()), header=False, index=False)
-
 
     def get_occlusion(self, o_name: str, o_id: int, region: RegionBounds) -> Tuple[float, ImagePosition]:
         """
