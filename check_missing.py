@@ -1,6 +1,7 @@
 import os
 import argparse
 import sys
+from pathlib import Path
 
 import pandas as pd
 
@@ -41,6 +42,18 @@ if __name__ == '__main__':
     if input('Continue to modify processed_records? (yes/no): ') != 'yes':
         sys.exit("exit program.")
     
-    
+    unique_scenes = missing_df['scene'].unique()
+    for scene_name in unique_scenes:
+        scene_df = missing_df[missing_df['scene'] == scene_name]
+        undo_models = scene_df['model'].unique()
 
+        done_models_path: Path = Path(dataset_folder).joinpath(f"{scene_name}_processed_records.txt")
+        processed_model_names = done_models_path.read_text(encoding="utf-8").split("\n")
 
+        # remove undo_models from processed_model_names
+        processed_model_names = list(set(processed_model_names) - set(undo_models))
+
+        # write back to done_models_path
+        done_models_path.write_text("\n".join(processed_model_names), encoding="utf-8")
+        print(f"Updated {scene_name}_processed_records.txt")
+        
