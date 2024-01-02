@@ -9,16 +9,8 @@ The main difference between this repo and https://github.com/alters-mit/tdw_imag
 [See TDW's requirements](https://github.com/threedworld-mit/tdw/blob/master/Documentation/getting_started.md#requirements)
 
 ## Install
-
-1. `git clone https://github.com/alters-mit/tdw_image_dataset`
-2. `cd tdw_image_dataset`
-3. `pip3 install -e .`
-4. `python3 download_build.py` (This will download the correct version of the build)
-
-## Log latents install
 ```
 git clone https://github.com/YudiXie/tdw_image_dataset.git
-git checkout log_latents
 
 conda create -n tdw python=3.9
 conda activate tdw
