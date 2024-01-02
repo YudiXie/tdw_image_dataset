@@ -2,6 +2,8 @@
 
 Generate a dataset of synthetic images using [TDW](https://github.com/threedworld-mit/tdw). By default, datasets have 1300000 "train" images and 50000 "val" images. A full dataset requires approximately 8 hours to generate using high-end hardware.
 
+The main difference between this repo and https://github.com/alters-mit/tdw_image_dataset is that this repo logs rich ground-truth information about the latent variables during the image generation process. The latent variables include object distance, rotations, and translation related to the camera.
+
 ## Requirements
 
 [See TDW's requirements](https://github.com/threedworld-mit/tdw/blob/master/Documentation/getting_started.md#requirements)
