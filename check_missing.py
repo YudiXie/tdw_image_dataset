@@ -7,7 +7,15 @@ from tqdm import trange
 import pandas as pd
 
 
-def find_missing_df(dataset_folder):
+if __name__ == '__main__':
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-d', '--directory', default='', help='the directory to saved dataset')
+    # # eg. '/om2/user/yu_xie/data/tdw_images/tdw_image_dataset_small_multi_env_hdri'
+    # args = parser.parse_args()
+    # dataset_folder = args.directory
+
+    dataset_folder = '/om2/user/yu_xie/data/tdw_images/tdw_image_dataset_small_multi_env_hdri'
+
     index_file = os.path.join(dataset_folder, 'index_img_5898.csv')
     full_df = pd.read_csv(index_file, index_col=0)
 
@@ -23,18 +31,7 @@ def find_missing_df(dataset_folder):
             missing_idx.append(idx)
 
     # Convert the list of missing images to a DataFrame
-    return full_df.iloc[missing_idx]
-
-
-if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('-d', '--directory', default='', help='the directory to saved dataset')
-    # # eg. '/om2/user/yu_xie/data/tdw_images/tdw_image_dataset_small_multi_env_hdri'
-    # args = parser.parse_args()
-    # dataset_folder = args.directory
-
-    dataset_folder = '/om2/user/yu_xie/data/tdw_images/tdw_image_dataset_small_multi_env_hdri'
-    missing_df = find_missing_df(dataset_folder)
+    missing_df = full_df.iloc[missing_idx]
     
     if len(missing_df) == 0:
         print("No missing images.")
