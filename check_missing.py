@@ -7,6 +7,12 @@ import pandas as pd
 
 
 if __name__ == '__main__':
+    """
+    Check if all of the images and image meta files specified in the index exist.
+    If not, save the missing images to a csv file, and remove the corresponding
+    scene and model from processed_records. So that the next time we run
+    the image generation scripts, the missing images will be generated.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--index', default='', help='the path to saved index')
     # eg. '/om2/user/yu_xie/data/tdw_images/tdw_image_dataset_small_multi_env_hdri/index_img_5898.csv'
