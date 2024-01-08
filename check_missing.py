@@ -41,7 +41,19 @@ if __name__ == '__main__':
     if input('Continue to modify processed_records? (yes/no): ') != 'yes':
         sys.exit("exit program.")
     
-    for scene_name in missing_df['scene'].unique():
+    # remove scenes from processed_scenes.txt
+    missing_scenes = missing_df['scene'].unique()
+    done_scenes_path = dataset_path.joinpath("processed_scenes.txt")
+    processed_scenes_names = done_scenes_path.read_text(encoding="utf-8").split("\n")
+
+    for scene_name in missing_scenes:
+        processed_scenes_names.remove(scene_name)
+    
+    done_scenes_path.write_text("\n".join(processed_scenes_names), encoding="utf-8")
+    print(f"Updated processed_scenes. Removed {len(missing_scenes)} scenes.")
+    
+    # remove models from scene_processed_records.txt
+    for scene_name in missing_scenes:
         scene_df = missing_df[missing_df['scene'] == scene_name]
         undo_models = scene_df['model'].unique()
 
