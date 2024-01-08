@@ -1,5 +1,6 @@
 import argparse
 import sys
+from datetime import datetime
 from pathlib import Path
 from tqdm import trange
 
@@ -38,7 +39,11 @@ if __name__ == '__main__':
     missing_df = full_df.iloc[missing_idx]
     
     if len(missing_df) == 0:
-        print("No missing images.")
+        print("No missing images. Dataset is complete!")
+        complete_time = datetime.now()
+        complete_path = dataset_path.joinpath("dataset_complete.txt")
+        complete_path.write_text(f'Dataset is complete, checked: {complete_time.strftime("%Y-%m-%d %H:%M:%S")}', 
+                                 encoding="utf-8")
         sys.exit("exit program.")
     
     print(f"Missing {len(missing_df)} images.")
