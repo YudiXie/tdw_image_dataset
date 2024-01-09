@@ -333,11 +333,11 @@ class ImageDataset(Controller):
                 "less_dark": self.less_dark,
                 "exterior_only": self.exterior_only,
                 "start": datetime.now().strftime("%H:%M %d.%m.%y")}
-        self.metadata_path.write_text(json.dumps(data, sort_keys=True, indent=4))
+        self.metadata_path.write_text(json.dumps(data, sort_keys=True, indent=4), encoding="utf-8")
 
         # save the meta headers into a file
         img_meta_headers_path = self.output_directory.joinpath(f"img_meta_headers.txt")
-        img_meta_headers_path.write_text("\n".join(self.IMG_META_HEADERS))
+        img_meta_headers_path.write_text("\n".join(self.IMG_META_HEADERS), encoding="utf-8")
     
     def initialize_scene(self, scene_name) -> SceneBounds:
         """
@@ -410,7 +410,7 @@ class ImageDataset(Controller):
             self.generate_single_scene(scene_name=scene)
             
             # Mark this scene as processed.
-            with done_scenes_path.open("at") as f:
+            with done_scenes_path.open("at", encoding="utf-8") as f:
                 f.write(f"\n{scene}")
         
         self.communicate({"$type": "terminate"})
@@ -471,17 +471,17 @@ class ImageDataset(Controller):
                 fps = self.process_model(record, scene_bounds, w)
 
                 # Mark this record as processed.
-                with done_models_path.open("at") as f:
+                with done_models_path.open("at", encoding="utf-8") as f:
                     f.write(f"\n{record.name}")
             pbar.update(1)
         pbar.close()
 
         # Add the end time to the metadata file.
-        metadata = json.loads(self.metadata_path.read_text())
+        metadata = json.loads(self.metadata_path.read_text(encoding="utf-8"))
         end_time = datetime.now().strftime("%H:%M %d.%m.%y")
         metadata.update({"end": end_time})
         metadata['scene_list'].append(self.current_scene)
-        self.metadata_path.write_text(json.dumps(metadata, sort_keys=True, indent=4))
+        self.metadata_path.write_text(json.dumps(metadata, sort_keys=True, indent=4), encoding="utf-8")
 
         # Don't need to unload the scene here since loading a new scene 
         # will automatically unload the old one, should doulbe check this
