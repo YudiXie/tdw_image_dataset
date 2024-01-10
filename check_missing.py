@@ -44,6 +44,7 @@ if __name__ == '__main__':
         complete_path = dataset_path.joinpath("dataset_complete.txt")
         complete_path.write_text(f'Dataset is complete, checked: {complete_time.strftime("%Y-%m-%d %H:%M:%S")}', 
                                  encoding="utf-8")
+        dataset_path.joinpath("missing.csv").unlink(missing_ok=True)
         sys.exit("exit program.")
     
     print(f"Missing {len(missing_df)} images.")
