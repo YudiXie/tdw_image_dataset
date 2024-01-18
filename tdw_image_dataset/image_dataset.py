@@ -46,8 +46,8 @@ class ImageDataset(Controller):
         'record_name',
         'image_file_name',
         'skybox_name',
-        'ty', # up-down position, center of image is 0, unit in pixels
-        'tz', # left-right position, center of image is 0, unit in pixels
+        'ty', # horizontal position of object, in pixels, center of image is 0, + is going right
+        'tz', # vertical position of object, in pixels, center of image is 0, + is going up
         'neg_x', # depth of object, unit in 3D space in TDW
         'euler_1',
         'euler_2',
