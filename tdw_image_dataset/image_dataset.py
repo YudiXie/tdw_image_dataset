@@ -683,11 +683,9 @@ class ImageDataset(Controller):
                 p.object_rotation['z'],
                 p.object_rotation['w'],
             )
-            assert len(save_tuple) == len(self.IMG_META_HEADERS), "save tuple length mismatch"
-            save_dict = {k: v for k, v in zip(self.IMG_META_HEADERS, save_tuple)}
 
             # Create a thread to save the image.
-            t = Thread(target=self.save_image, args=(img_resp, save_dict, out_path, image_index))
+            t = Thread(target=self.save_image, args=(img_resp, save_tuple, out_path, image_index))
             t.daemon = True
             t.start()
 
@@ -738,27 +736,23 @@ class ImageDataset(Controller):
                  "scale_factor": {"x": s, "y": s, "z": s}},
                 {"$type": "send_transforms"}]
 
-    def save_image(self, resp, save_dict: dict, output_directory: Path, image_index: int) -> None:
+    def save_image(self, resp, save_tuple: tuple, output_directory: Path, image_index: int) -> None:
         """
         Save an image.
 
         :param resp: The raw response data.
-        :param save_dict: The metadata to save.
+        :param save_tuple: The metadata to save.
         :param record: The model record.
         :param image_index: The image index.
         :param wnid: The wnid.
         """
-
         # Save the image.
-        filename = f"img_{image_index:010d}"
-
-        new_save_dict = {}
-        for k, v in save_dict.items():
-            new_save_dict[k] = [v, ]
+        filename = f"{image_index:010d}"
         
-        save_df = pd.DataFrame.from_dict(new_save_dict)
-        csv_path = output_directory.joinpath(filename + "_info.csv")
-        save_df.to_csv(str(csv_path.resolve()), header=False, index=False)
+        # assert len(save_tuple) == len(self.IMG_META_HEADERS), "save tuple length mismatch"
+        save_dict = {k: [v, ] for k, v in zip(self.IMG_META_HEADERS, save_tuple)}
+        csv_path = output_directory.joinpath("img_" + filename + "_info.csv")
+        pd.DataFrame.from_dict(save_dict).to_csv(csv_path, header=False, index=False)
 
         # Save the image without resizing.
         if not self.scale:
