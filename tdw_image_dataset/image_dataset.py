@@ -50,6 +50,16 @@ def sample_avatar_position(region: RegionBounds, offset: float = 0.0) -> np.arra
                             RNG.uniform(region.z_min, region.z_max)])
 
 
+def sample_spherical(npoints=1, ndim=3) -> np.array:
+    """
+    Generate a random point on the surface of a unit sphere.
+    return the (x, y, z) coordinates of the point
+    """
+    vec = RNG.randn(ndim, npoints)
+    vec /= np.linalg.norm(vec, axis=0)
+    return np.array([vec[0][0], vec[1][0], vec[2][0]])
+
+
 def sample_object_position(avatar_position: np.array, region: RegionBounds) -> np.array:
     """
     :param avatar_position: The position of the avatar.
@@ -61,7 +71,7 @@ def sample_object_position(avatar_position: np.array, region: RegionBounds) -> n
     # Get a random distance from the avatar.
     d = RNG.uniform(0.9, 4.5)
     # Get a random position for the object constrained to the environment bounds.
-    o_p = ImageDataset.sample_spherical() * d
+    o_p = sample_spherical() * d
     # Clamp the y value to positive.
     o_p[1] = abs(o_p[1])
     o_p = avatar_position + o_p
@@ -843,10 +853,68 @@ class ImageDataset(Controller):
                      },
                      ]
 
-        # Rotate the object.
-        commands.extend(self.get_object_rotation_commands(o_id=o_id, o_name=o_name))
+        # Rotate the object. If we're clamping the rotation, rotate the object within +/- 30 degrees on each axis.
+        # TODO: object is rotated around global axes, which is independent of the camera viewing angle
+        # the best is to have the object face the camera first and rotate around the camera's local axes
+        if self.clamp_rotation:
+            commands.extend([
+                {
+                "$type": "rotate_object_to",
+                "id": o_id,
+                "rotation": self.initial_rotations[o_name],
+                "use_centroid": True,
+                },
+                {
+                "$type": "rotate_object_by",
+                "id": o_id,
+                "angle": RNG.uniform(-30, 30),
+                "axis": "pitch",
+                "use_centroid": True,
+                },
+                {
+                "$type": "rotate_object_by",
+                "id": o_id,
+                "angle": RNG.uniform(-30, 30),
+                "axis": "yaw",
+                "use_centroid": True,
+                },
+                {
+                "$type": "rotate_object_by",
+                "id": o_id,
+                "angle": RNG.uniform(-30, 30),
+                "axis": "roll",
+                "use_centroid": True,
+                },
+            ])
+        else:
+        # Set a totally random rotation.
+            commands.extend([
+                {
+                "$type": "rotate_object_to",
+                "id": o_id,
+                "rotation": {"x": RNG.uniform(-360, 360),
+                             "y": RNG.uniform(-360, 360),
+                             "z": RNG.uniform(-360, 360),
+                             "w": RNG.uniform(-360, 360)},
+                },
+            ])
+
         # Rotate the camera.
-        commands.extend(self.get_camera_rotation_commands(o_id=o_id))
+        commands.extend([
+            {"$type": "look_at",
+             "object_id": o_id,
+             "use_centroid": True,
+             },
+            {"$type": "rotate_sensor_container_by",
+             "angle": RNG.uniform(-15, 15),
+             "axis": "pitch",
+             },
+            {"$type": "rotate_sensor_container_by",
+             "angle": RNG.uniform(-15, 15),
+             "axis": "yaw",
+             },
+            ])
+        
         # Request output data.
         commands.extend([{"$type": "send_occlusion",
                           "frequency": "once"},
@@ -880,78 +948,6 @@ class ImageDataset(Controller):
                                         object_position=o_p,
                                         object_rotation=o_rot,
                                         camera_rotation=cam_rot)
-
-    def get_object_rotation_commands(self, o_id: int, o_name: str) -> List[dict]:
-        """
-        :param o_id: The object ID.
-        :param o_name: The object name.
-
-        :return: A list of commands to rotate the object.
-        """
-
-        # Add rotation commands. If we're clamping the rotation, rotate the object within +/- 30 degrees on each axis.
-        if self.clamp_rotation:
-            # TODO: object is rotated around global axes, which is independent of the camera viewing angle
-            # the best is to have the object face the camera first and rotate around the camera's local axes
-            return [{"$type": "rotate_object_to",
-                     "id": o_id,
-                     "rotation": self.initial_rotations[o_name],
-                     "use_centroid": True,
-                     },
-                    {"$type": "rotate_object_by",
-                     "id": o_id,
-                     "angle": RNG.uniform(-30, 30),
-                     "axis": "pitch",
-                     "use_centroid": True,
-                     },
-                    {"$type": "rotate_object_by",
-                     "id": o_id,
-                     "angle": RNG.uniform(-30, 30),
-                     "axis": "yaw",
-                     "use_centroid": True,
-                     },
-                    {"$type": "rotate_object_by",
-                     "id": o_id,
-                     "angle": RNG.uniform(-30, 30),
-                     "axis": "roll",
-                     "use_centroid": True,
-                     },
-                     ]
-        # Set a totally random rotation.
-        else:
-            return [{"$type": "rotate_object_to",
-                     "id": o_id,
-                     "rotation": {"x": RNG.uniform(-360, 360),
-                                  "y": RNG.uniform(-360, 360),
-                                  "z": RNG.uniform(-360, 360),
-                                  "w": RNG.uniform(-360, 360)}}]
-
-    def get_camera_rotation_commands(self, o_id: int) -> List[dict]:
-        """
-        :param o_id: The object ID.
-
-        :return: A list of commands to rotate the camera.
-        """
-
-        return [{"$type": "look_at",
-                 "object_id": o_id,
-                 "use_centroid": True},
-                {"$type": "rotate_sensor_container_by",
-                 "angle": RNG.uniform(-15, 15),
-                 "axis": "pitch"},
-                {"$type": "rotate_sensor_container_by",
-                 "angle": RNG.uniform(-15, 15),
-                 "axis": "yaw"}]
-
-    @staticmethod
-    def sample_spherical(npoints=1, ndim=3) -> np.array:
-        """
-        Generate a random point on the surface of a unit sphere.
-        return the (x, y, z) coordinates of the point
-        """
-        vec = RNG.randn(ndim, npoints)
-        vec /= np.linalg.norm(vec, axis=0)
-        return np.array([vec[0][0], vec[1][0], vec[2][0]])
 
     @staticmethod
     def zip_images(output_directory: Path) -> None:
