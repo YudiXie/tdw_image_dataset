@@ -593,6 +593,9 @@ class ImageDataset(Controller):
                         {"$type": "rotate_object_to",
                          "id": o_id,
                          "rotation": p.object_rotation}]
+            # TODO: make sure the position and rotation used during image rendering is the same as the positions and rotations used during occlusion estimation
+            # as rotate_object_to last might change object position set before.
+
             # Set the visual materials.
             if self.materials:
                 if record.name not in self.substructures:
