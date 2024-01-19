@@ -931,6 +931,10 @@ class ImageDataset(Controller):
 
     @staticmethod
     def sample_spherical(npoints=1, ndim=3) -> np.array:
+        """
+        Generate a random point on the surface of a unit sphere.
+        return the (x, y, z) coordinates of the point
+        """
         vec = RNG.randn(ndim, npoints)
         vec /= np.linalg.norm(vec, axis=0)
         return np.array([vec[0][0], vec[1][0], vec[2][0]])
