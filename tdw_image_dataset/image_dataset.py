@@ -24,6 +24,58 @@ REQUIRED_TDW_VERSION: str = "1.9.0"
 RNG: np.random.RandomState = np.random.RandomState(0)
 
 
+def sample_avatar_position(region: RegionBounds, offset: float = 0.0) -> np.array:
+    """
+    :param region: The scene region bounds.
+    :param offset: Restrict the agent from offset to the edge of the region.
+
+    :return: The position of the avatar for the next image as a numpy array.
+    """
+    if offset > 0.0:
+        assert region.x_max - region.x_min > 2 * offset, "region x too small"
+        x_min = region.x_min + offset
+        x_max = region.x_max - offset
+        assert region.z_max - region.z_min > 2 * offset, "region z too small"
+        z_min = region.z_min + offset
+        z_max = region.z_max - offset
+        # assert region.y_max > 0.4 + offset, "region y too small"
+        # y_max = region.y_max - offset
+        y_max = region.y_max
+        return np.array([RNG.uniform(x_min, x_max),
+                            RNG.uniform(0.4, y_max),
+                            RNG.uniform(z_min, z_max)])
+    else:
+        return np.array([RNG.uniform(region.x_min, region.x_max),
+                            RNG.uniform(0.4, region.y_max),
+                            RNG.uniform(region.z_min, region.z_max)])
+
+
+def sample_object_position(avatar_position: np.array, region: RegionBounds) -> np.array:
+    """
+    :param avatar_position: The position of the avatar.
+    :param region: The scene region bounds.
+
+    :return: The position of the object for the next image as a numpy array.
+    """
+
+    # Get a random distance from the avatar.
+    d = RNG.uniform(0.9, 4.5)
+    # Get a random position for the object constrained to the environment bounds.
+    o_p = ImageDataset.sample_spherical() * d
+    # Clamp the y value to positive.
+    o_p[1] = abs(o_p[1])
+    o_p = avatar_position + o_p
+
+    # TODO: if object position is out of bound, resample instead of clampping
+
+    # TODO: can we teleport object center to the position instead of the bottom center of the object?
+
+    # Clamp the y value of the object.
+    if o_p[1] > region.y_max:
+        o_p[1] = region.y_max
+    return o_p
+
+
 class ImageDataset(Controller):
     """
     Generate image datasets. Each image will have a single object in the scene in a random position and orientation.
@@ -779,14 +831,18 @@ class ImageDataset(Controller):
         """
 
         # Get a random position for the avatar.
-        a_p = self.get_avatar_position(region=region, offset=self.offset)
-        # Teleport the object.
-        commands = self.get_object_position_commands(o_id=o_id, avatar_position=a_p, region=region)
-        # Convert the avatar's position to a Vector3.
-        a_p = TDWUtils.array_to_vector3(a_p)
-        # Teleport the avatar.
-        commands.append({"$type": "teleport_avatar_to",
-                         "position": a_p})
+        a_p = sample_avatar_position(region, self.offset)
+        o_p = sample_object_position(a_p, region)
+
+        commands = [{"$type": "teleport_object",
+                     "id": o_id,
+                     "position": TDWUtils.array_to_vector3(o_p),
+                     },
+                    {"$type": "teleport_avatar_to",
+                     "position": TDWUtils.array_to_vector3(a_p),
+                     },
+                     ]
+
         # Rotate the object.
         commands.extend(self.get_object_rotation_commands(o_id=o_id, o_name=o_name))
         # Rotate the camera.
@@ -824,60 +880,6 @@ class ImageDataset(Controller):
                                         object_position=o_p,
                                         object_rotation=o_rot,
                                         camera_rotation=cam_rot)
-
-    @staticmethod
-    def get_avatar_position(region: RegionBounds, offset: float = 0.0) -> np.array:
-        """
-        :param region: The scene region bounds.
-        :param offset: Restrict the agent from offset to the edge of the region.
-
-        :return: The position of the avatar for the next image as a numpy array.
-        """
-        if offset > 0.0:
-            assert region.x_max - region.x_min > 2 * offset, "region x too small"
-            x_min = region.x_min + offset
-            x_max = region.x_max - offset
-            assert region.z_max - region.z_min > 2 * offset, "region z too small"
-            z_min = region.z_min + offset
-            z_max = region.z_max - offset
-            # assert region.y_max > 0.4 + offset, "region y too small"
-            # y_max = region.y_max - offset
-            y_max = region.y_max
-            return np.array([RNG.uniform(x_min, x_max),
-                             RNG.uniform(0.4, y_max),
-                             RNG.uniform(z_min, z_max)])
-        else:
-            return np.array([RNG.uniform(region.x_min, region.x_max),
-                             RNG.uniform(0.4, region.y_max),
-                             RNG.uniform(region.z_min, region.z_max)])
-
-    def get_object_position_commands(self, o_id: int, avatar_position: np.array, region: RegionBounds) -> List[dict]:
-        """
-        :param o_id: The object ID.
-        :param avatar_position: The position of the avatar.
-        :param region: The scene region bounds.
-
-        :return: The position of the object for the next image as a numpy array.
-        """
-
-        # Get a random distance from the avatar.
-        d = RNG.uniform(0.9, 4.5)
-        # Get a random position for the object constrained to the environment bounds.
-        o_p = ImageDataset.sample_spherical() * d
-        # Clamp the y value to positive.
-        o_p[1] = abs(o_p[1])
-        o_p = avatar_position + o_p
-
-        # TODO: if object position is out of bound, resample instead of clampping
-
-        # TODO: can we teleport object center to the position instead of the bottom center of the object?
-
-        # Clamp the y value of the object.
-        if o_p[1] > region.y_max:
-            o_p[1] = region.y_max
-        return [{"$type": "teleport_object",
-                 "id": o_id,
-                 "position": TDWUtils.array_to_vector3(o_p)}]
 
     def get_object_rotation_commands(self, o_id: int, o_name: str) -> List[dict]:
         """
