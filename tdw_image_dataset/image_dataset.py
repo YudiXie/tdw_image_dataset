@@ -853,9 +853,9 @@ class ImageDataset(Controller):
                      },
                      ]
 
-        # Rotate the object. If we're clamping the rotation, rotate the object within +/- 30 degrees on each axis.
-        # TODO: object is rotated around global axes, which is independent of the camera viewing angle
-        # the best is to have the object face the camera first and rotate around the camera's local axes
+        # Rotate the object. 
+        # If we're clamping the rotation, rotate the object within +/- 30 degrees on each axis.
+        # The object is rotated around the global axes, which is independent of the camera viewing angle
         if self.clamp_rotation:
             commands.extend([
                 {
