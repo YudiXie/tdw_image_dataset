@@ -944,7 +944,7 @@ class ImageDataset(Controller):
                 transforms = Transforms(resp[i])
                 o_rot = TDWUtils.array_to_vector4(transforms.get_rotation(0))
                 o_p = TDWUtils.array_to_vector3(transforms.get_position(0))
-        return occlusion, ImagePosition(avatar_position=a_p,
+        return occlusion, ImagePosition(avatar_position=TDWUtils.array_to_vector3(a_p),
                                         object_position=o_p,
                                         object_rotation=o_rot,
                                         camera_rotation=cam_rot)
