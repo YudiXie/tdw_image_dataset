@@ -864,7 +864,7 @@ class ImageDataset(Controller):
         """
 
         # Get a random distance from the avatar.
-        d = RNG.uniform(0.8, 3)
+        d = RNG.uniform(0.9, 4.5)
         # Get a random position for the object constrained to the environment bounds.
         o_p = ImageDataset.sample_spherical() * d
         # Clamp the y value to positive.
