@@ -871,6 +871,10 @@ class ImageDataset(Controller):
         o_p[1] = abs(o_p[1])
         o_p = avatar_position + o_p
 
+        # TODO: if object position is out of bound, resample instead of clampping
+
+        # TODO: can we teleport object center to the position instead of the bottom center of the object?
+
         # Clamp the y value of the object.
         if o_p[1] > region.y_max:
             o_p[1] = region.y_max
@@ -888,21 +892,32 @@ class ImageDataset(Controller):
 
         # Add rotation commands. If we're clamping the rotation, rotate the object within +/- 30 degrees on each axis.
         if self.clamp_rotation:
+            # TODO: object is rotated around global axes, which is independent of the camera viewing angle
+            # the best is to have the object face the camera first and rotate around the camera's local axes
             return [{"$type": "rotate_object_to",
                      "id": o_id,
-                     "rotation": self.initial_rotations[o_name]},
+                     "rotation": self.initial_rotations[o_name],
+                     "use_centroid": True,
+                     },
                     {"$type": "rotate_object_by",
                      "id": o_id,
                      "angle": RNG.uniform(-30, 30),
-                     "axis": "pitch"},
+                     "axis": "pitch",
+                     "use_centroid": True,
+                     },
                     {"$type": "rotate_object_by",
                      "id": o_id,
                      "angle": RNG.uniform(-30, 30),
-                     "axis": "yaw"},
+                     "axis": "yaw",
+                     "use_centroid": True,
+                     },
                     {"$type": "rotate_object_by",
                      "id": o_id,
                      "angle": RNG.uniform(-30, 30),
-                     "axis": "roll"}]
+                     "axis": "roll",
+                     "use_centroid": True,
+                     },
+                     ]
         # Set a totally random rotation.
         else:
             return [{"$type": "rotate_object_to",
