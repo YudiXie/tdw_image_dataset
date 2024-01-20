@@ -862,7 +862,7 @@ class ImageDataset(Controller):
                 "$type": "rotate_object_to",
                 "id": o_id,
                 "rotation": self.initial_rotations[o_name],
-                "use_centroid": True,
+                # "use_centroid": True,
                 },
                 {
                 "$type": "rotate_object_by",
