@@ -24,12 +24,22 @@ REQUIRED_TDW_VERSION: str = "1.9.0"
 RNG: np.random.RandomState = np.random.RandomState(0)
 
 
-def sample_avatar_position(region: RegionBounds, offset: float = 0.0) -> np.array:
+def sample_spherical(npoints=1, ndim=3) -> np.array:
+    """
+    Generate a random point on the surface of a unit sphere.
+    return the (x, y, z) coordinates of the point
+    """
+    vec = RNG.randn(ndim, npoints)
+    vec /= np.linalg.norm(vec, axis=0)
+    return np.array([vec[0][0], vec[1][0], vec[2][0]])
+
+
+def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0) -> np.array:
     """
     :param region: The scene region bounds.
     :param offset: Restrict the agent from offset to the edge of the region.
 
-    :return: The position of the avatar for the next image as a numpy array.
+    :return: The position of the avatar and object for the next image as a numpy array.
     """
     if offset > 0.0:
         assert region.x_max - region.x_min > 2 * offset, "region x too small"
@@ -41,49 +51,31 @@ def sample_avatar_position(region: RegionBounds, offset: float = 0.0) -> np.arra
         # assert region.y_max > 0.4 + offset, "region y too small"
         # y_max = region.y_max - offset
         y_max = region.y_max
-        return np.array([RNG.uniform(x_min, x_max),
-                            RNG.uniform(0.4, y_max),
-                            RNG.uniform(z_min, z_max)])
+        avatar_p = np.array([RNG.uniform(x_min, x_max),
+                             RNG.uniform(0.4, y_max),
+                             RNG.uniform(z_min, z_max)])
     else:
-        return np.array([RNG.uniform(region.x_min, region.x_max),
-                            RNG.uniform(0.4, region.y_max),
-                            RNG.uniform(region.z_min, region.z_max)])
-
-
-def sample_spherical(npoints=1, ndim=3) -> np.array:
-    """
-    Generate a random point on the surface of a unit sphere.
-    return the (x, y, z) coordinates of the point
-    """
-    vec = RNG.randn(ndim, npoints)
-    vec /= np.linalg.norm(vec, axis=0)
-    return np.array([vec[0][0], vec[1][0], vec[2][0]])
-
-
-def sample_object_position(avatar_position: np.array, region: RegionBounds) -> np.array:
-    """
-    :param avatar_position: The position of the avatar.
-    :param region: The scene region bounds.
-
-    :return: The position of the object for the next image as a numpy array.
-    """
-
+        avatar_p = np.array([RNG.uniform(region.x_min, region.x_max),
+                             RNG.uniform(0.4, region.y_max),
+                             RNG.uniform(region.z_min, region.z_max)])
+    
     # Get a random distance from the avatar.
-    d = RNG.uniform(0.9, 4.5)
+    distance = RNG.uniform(0.9, 4.5)
     # Get a random position for the object constrained to the environment bounds.
-    o_p = sample_spherical() * d
-    # Clamp the y value to positive.
-    o_p[1] = abs(o_p[1])
-    o_p = avatar_position + o_p
+    object_p = sample_spherical() * distance
+    # only sample object higher than the avatar
+    object_p[1] = abs(object_p[1])
+    object_p = avatar_p + object_p
 
     # TODO: if object position is out of bound, resample instead of clampping
 
     # TODO: can we teleport object center to the position instead of the bottom center of the object?
 
     # Clamp the y value of the object.
-    if o_p[1] > region.y_max:
-        o_p[1] = region.y_max
-    return o_p
+    if object_p[1] > region.y_max:
+        object_p[1] = region.y_max
+
+    return avatar_p, object_p
 
 
 class ImageDataset(Controller):
@@ -849,8 +841,7 @@ class ImageDataset(Controller):
         """
 
         # Get a random position for the avatar.
-        a_p = sample_avatar_position(region, self.offset)
-        o_p = sample_object_position(a_p, region)
+        a_p, o_p = sample_avatar_object_position(region, self.offset)
 
         commands = [{"$type": "teleport_object",
                      "id": o_id,
