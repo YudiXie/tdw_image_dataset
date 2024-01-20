@@ -13,7 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 from tdw.controller import Controller
 from tdw.tdw_utils import TDWUtils
-from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version, ScreenPosition, LocalTransforms
+from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version, ScreenPosition, LocalTransforms, Bounds
 from tdw.librarian import ModelLibrarian, MaterialLibrarian, HDRISkyboxLibrarian, ModelRecord, HDRISkyboxRecord
 from tdw.scene_data.scene_bounds import SceneBounds
 from tdw.scene_data.region_bounds import RegionBounds
@@ -682,8 +682,16 @@ class ImageDataset(Controller):
                     commands.append(command)
                 # commands.append({"$type": "rotate_hdri_skybox_by",
                 #                  "angle": RNG.uniform(0, 360)})
+            
+            commands.append({"$type": "send_bounds", "ids": [o_id, ]})
 
             img_resp = self.communicate(commands)
+
+            object_bounds = None
+            for i in range(len(img_resp) - 1):
+                r_id = OutputData.get_data_type_id(img_resp[i])
+                if r_id == "boun":
+                    object_bounds = Bounds(img_resp[i])
 
             # instruct the build to send screen position of the object
             # the position is likely the bottom center of the object
@@ -691,8 +699,8 @@ class ImageDataset(Controller):
             resp = self.communicate(
                 [{"$type": "send_screen_positions",
                   "position_ids": [0],
-                  "positions": [p.object_position]},
-                 {"$type": "parent_object_to_avatar", 
+                  "positions": [TDWUtils.array_to_vector3(object_bounds.get_center(0))]},
+                 {"$type": "parent_object_to_avatar",
                   "id": o_id, "avatar_id": ImageDataset.AVATAR_ID, 
                   "sensor": True},
                  {"$type": "send_local_transforms", 
