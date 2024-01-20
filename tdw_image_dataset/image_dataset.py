@@ -59,20 +59,22 @@ def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0) -> 
                              RNG.uniform(0.4, region.y_max),
                              RNG.uniform(region.z_min, region.z_max)])
     
-    # Get a random distance from the avatar.
-    distance = RNG.uniform(0.9, 4.5)
-    # Get a random position for the object constrained to the environment bounds.
-    object_p = sample_spherical() * distance
-    # only sample object higher than the avatar
-    object_p[1] = abs(object_p[1])
-    object_p = avatar_p + object_p
-
-    # TODO: if object position is out of bound, resample instead of clampping
-
-    # TODO: can we teleport object center to the position instead of the bottom center of the object?
-
-    # Clamp the y value of the object.
-    if object_p[1] > region.y_max:
+    resample_ct = 0
+    resample_num = 50
+    while resample_ct < resample_num:
+        # Get a random distance from the avatar.
+        distance = RNG.uniform(0.9, 4.5)
+        # Get a random position for the object constrained to the environment bounds.
+        object_p = sample_spherical() * distance
+        # only sample object higher than the avatar
+        object_p[1] = abs(object_p[1])
+        object_p = avatar_p + object_p
+        if object_p[1] < region.y_max:
+            break
+        resample_ct += 1
+    
+    # Clamp the y value of the object if we've resampled too many times.
+    if resample_ct >= resample_num:
         object_p[1] = region.y_max
 
     return avatar_p, object_p
