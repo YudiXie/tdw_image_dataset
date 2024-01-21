@@ -92,8 +92,10 @@ class ImageDataset(Controller):
     The ID of the avatar.
     """
     AVATAR_ID: str = "a"
-    # models that have multiple objects are removed from generation
-    MULTI_OBJ_MODELS = ['b02_bag', 'lantern_2010', 'b04_bottle_max']
+    EXCLUDE_MODELS = [
+        'b02_bag', 'lantern_2010', 'b04_bottle_max', # models that have multiple objects are removed
+        'heart', 'shark', # models that have wrong pivot points are removed
+        ]
     # The headers of the metadata file.
     IMG_META_HEADERS = (
         'scene_name',
@@ -299,7 +301,7 @@ class ImageDataset(Controller):
             wnids_list = self.subset_wnids
             for w in wnids_list:
                 wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                wnid_models = [r for r in wnid_models_raw if ((not r.do_not_use) and (r.name not in self.MULTI_OBJ_MODELS))]
+                wnid_models = [r for r in wnid_models_raw if ((not r.do_not_use) and (r.name not in self.EXCLUDE_MODELS))]
                 assert len(wnid_models) > 0, f"ID: {w} do not have usable models"
                 self.wnid2models[w] = wnid_models
         else:
@@ -308,7 +310,7 @@ class ImageDataset(Controller):
             # Remove any wnids in wnids_list that don't have valid models.
             for w in wnids_list:
                 wnid_models_raw = Controller.MODEL_LIBRARIANS[self.model_library_file].get_all_models_in_wnid(w)
-                wnid_models = [r for r in wnid_models_raw if ((not r.do_not_use) and (r.name not in self.MULTI_OBJ_MODELS))]
+                wnid_models = [r for r in wnid_models_raw if ((not r.do_not_use) and (r.name not in self.EXCLUDE_MODELS))]
                 if len(wnid_models) > 0:
                     self.wnid2models[w] = wnid_models
         
