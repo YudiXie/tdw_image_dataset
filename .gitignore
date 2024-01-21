@@ -3,5 +3,10 @@ tdw_image_dataset.egg-info/
 tdw_image_dataset/__pycache__/
 
 # added by Yudi
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
 *.ipynb
 .vscode/
