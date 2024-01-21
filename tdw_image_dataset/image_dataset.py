@@ -63,7 +63,7 @@ def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0) -> 
     resample_num = 50
     while resample_ct < resample_num:
         # Get a random distance from the avatar.
-        distance = RNG.uniform(0.9, 4.5)
+        distance = RNG.uniform(0.9, 4.2)
         # Get a random position for the object constrained to the environment bounds.
         object_p = sample_spherical() * distance
         # only sample object higher than the avatar
