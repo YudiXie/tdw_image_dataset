@@ -542,28 +542,6 @@ class ImageDataset(Controller):
         # Don't need to unload the scene here since loading a new scene 
         # will automatically unload the old one, should doulbe check this
 
-    def _set_skybox(self) -> Optional[dict]:
-        """
-        If it's time, set a new skybox.
-
-        :return: command for setting the skybox.
-        """
-        # Set a new skybox.
-        if self.skybox_img_idx == 0:
-            command = self.get_add_hdri_skybox(self.skyboxes[self.skybox_idx].name)
-        # It's not time yet to set a new skybox. Don't send a command.
-        else:
-            command = None
-        
-        self.skybox_img_idx += 1
-        if self.skybox_img_idx >= self.imgs_per_skybox:
-            self.skybox_img_idx = 0
-            # move to the next skybox in the next call
-            self.skybox_idx += 1
-            if self.skybox_idx >= len(self.skyboxes):
-                self.skybox_idx = 0
-        return command
-
     def process_model(self, record: ModelRecord, scene_bounds: SceneBounds, wnid: str) -> float:
         """
         Capture images of a model.
@@ -667,15 +645,30 @@ class ImageDataset(Controller):
                                           "material_name": material_name,
                                           "object_name": sub_object["name"],
                                           "material_index": i}])
+            
             # Maybe set a new skybox. Rotate the skybox.
             if self.skyboxes:
                 # the name of the skybox the following command set to
                 skybox_name = self.skyboxes[self.skybox_idx].name
-                command = self._set_skybox()
+                # Set a new skybox.
+                if self.skybox_img_idx == 0:
+                    command = self.get_add_hdri_skybox(self.skyboxes[self.skybox_idx].name)
+                # It's not time yet to set a new skybox. Don't send a command.
+                else:
+                    command = None
+                                
                 if command:
                     commands.append(command)
                 # commands.append({"$type": "rotate_hdri_skybox_by",
                 #                  "angle": RNG.uniform(0, 360)})
+                
+                self.skybox_img_idx += 1
+                if self.skybox_img_idx >= self.imgs_per_skybox:
+                    self.skybox_img_idx = 0
+                    # move to the next skybox in the next call
+                    self.skybox_idx += 1
+                    if self.skybox_idx >= len(self.skyboxes):
+                        self.skybox_idx = 0
             
             commands.append({"$type": "send_bounds", "ids": [o_id, ]})
 
