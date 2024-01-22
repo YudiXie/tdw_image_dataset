@@ -922,7 +922,7 @@ class ImageDataset(Controller):
         # 1. The occlusion value of the image.
         # 2. The camera rotation.
         # 3. The object position and rotation.
-        occlusion: float = 0
+        occlusion: float = 1.0
         # a_p is not changed so we don't need to update it
         cam_rot = None
         o_rot = None
