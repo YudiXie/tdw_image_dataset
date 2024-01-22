@@ -927,17 +927,25 @@ class ImageDataset(Controller):
         cam_rot = None
         o_rot = None
         o_p = None
+        has_occl, has_imse, has_tran = False, False, False
         for i in range(len(resp) - 1):
-            r_id = resp[i][4:8]
-            if r_id == b"occl":
+            r_id = OutputData.get_data_type_id(resp[i])
+            if r_id == "occl":
                 occlusion = Occlusion(resp[i]).get_occluded()
-            elif r_id == b"imse":
-                cam_rot = ImageSensors(resp[i]).get_sensor_rotation(0)
+                has_occl = True
+            elif r_id == "imse":
+                img_sen = ImageSensors(resp[i])
+                assert img_sen.get_num_sensors() == 1, "only one sensor"
+                cam_rot = img_sen.get_sensor_rotation(0)
                 cam_rot = {"x": cam_rot[0], "y": cam_rot[1], "z": cam_rot[2], "w": cam_rot[3]}
-            elif r_id == b"tran":
+                has_imse = True
+            elif r_id == "tran":
                 transforms = Transforms(resp[i])
+                assert transforms.get_num() == 1, "only one object"
                 o_rot = TDWUtils.array_to_vector4(transforms.get_rotation(0))
                 o_p = TDWUtils.array_to_vector3(transforms.get_position(0))
+                has_tran = True
+        assert has_occl and has_imse and has_tran, "missing occlusion, image sensor or transform"
         return occlusion, ImagePosition(avatar_position=TDWUtils.array_to_vector3(a_p),
                                         object_position=o_p,
                                         object_rotation=o_rot,
