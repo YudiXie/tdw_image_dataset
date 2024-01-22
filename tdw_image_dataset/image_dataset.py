@@ -909,17 +909,18 @@ class ImageDataset(Controller):
             ])
 
         # Rotate the camera, all of these will not change avator position
+        cam_rot_range = 20
         commands.extend([
             {"$type": "look_at",
              "object_id": o_id,
              "use_centroid": True,
              },
             {"$type": "rotate_sensor_container_by",
-             "angle": RNG.uniform(-15, 15),
+             "angle": RNG.uniform(-cam_rot_range, cam_rot_range),
              "axis": "pitch",
              },
             {"$type": "rotate_sensor_container_by",
-             "angle": RNG.uniform(-15, 15),
+             "angle": RNG.uniform(-cam_rot_range, cam_rot_range),
              "axis": "yaw",
              },
             ])
