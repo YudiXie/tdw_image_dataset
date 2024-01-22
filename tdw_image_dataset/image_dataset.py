@@ -848,35 +848,40 @@ class ImageDataset(Controller):
                      ]
 
         # Rotate the object. 
-        # If we're clamping the rotation, rotate the object within +/- 30 degrees on each axis.
-        # The object is rotated around the global axes, which is independent of the camera viewing angle
+        # If we're clamping the rotation, rotate the object within +/- rot_range degrees on each axis.
         if self.clamp_rotation:
+            rot_range = 45
             commands.extend([
+                # {
+                # "$type": "rotate_object_to",
+                # "id": o_id,
+                # "rotation": self.initial_rotations[o_name],
+                # },
                 {
-                "$type": "rotate_object_to",
+                "$type": "object_look_at_position",
+                "position": TDWUtils.array_to_vector3(a_p),
                 "id": o_id,
-                "rotation": self.initial_rotations[o_name],
                 },
                 {
                 "$type": "rotate_object_by",
                 "id": o_id,
-                "angle": RNG.uniform(-30, 30),
+                "angle": RNG.uniform(-rot_range, rot_range),
                 "axis": "pitch",
-                "use_centroid": True,  # will change object pivot position
+                "is_world": False,
                 },
                 {
                 "$type": "rotate_object_by",
                 "id": o_id,
-                "angle": RNG.uniform(-30, 30),
+                "angle": RNG.uniform(-rot_range, rot_range),
                 "axis": "yaw",
-                "use_centroid": True,  # will change object pivot position
+                "is_world": False,
                 },
                 {
                 "$type": "rotate_object_by",
                 "id": o_id,
-                "angle": RNG.uniform(-30, 30),
+                "angle": RNG.uniform(-rot_range, rot_range),
                 "axis": "roll",
-                "use_centroid": True,  # will change object pivot position
+                "is_world": False,
                 },
             ])
         else:
