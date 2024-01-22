@@ -570,9 +570,18 @@ class ImageDataset(Controller):
 
         # Add the object.
         resp = self.communicate(self.get_object_initialization_commands(record=record, o_id=o_id))
+        
+        o_init_transforms = None
+        for i in range(len(resp) - 1):
+            r_id = OutputData.get_data_type_id(resp[i])
+            if r_id == "tran":
+                o_init_transforms = Transforms(resp[i])
+                assert o_init_transforms.get_num() == 1, "object transform should only have one object"
+                o_init_rot = o_init_transforms.get_rotation(0)
+        
         # Cache the initial rotation of the object.
         if record.name not in self.initial_rotations:
-            self.initial_rotations[record.name] = TDWUtils.array_to_vector4(Transforms(resp[0]).get_rotation(0))
+            self.initial_rotations[record.name] = TDWUtils.array_to_vector4(o_init_rot)
         
         # The index in the HDRI records array.
         self.skybox_idx = 0
@@ -852,6 +861,7 @@ class ImageDataset(Controller):
         if self.clamp_rotation:
             rot_range = 45
             commands.extend([
+                # an alternative to look at the camera is to initlize object by its initial rotation
                 # {
                 # "$type": "rotate_object_to",
                 # "id": o_id,
