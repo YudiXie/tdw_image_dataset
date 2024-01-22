@@ -621,16 +621,14 @@ class ImageDataset(Controller):
             # Get the response.
             commands = [{"$type": "teleport_avatar_to",
                          "position": p.avatar_position},
-                        {"$type": "rotate_sensor_container_to",
+                        {"$type": "rotate_sensor_container_to",  # will not change avator position
                          "rotation": p.camera_rotation},
                         {"$type": "teleport_object",
                          "id": o_id,
                          "position": p.object_position},
-                        {"$type": "rotate_object_to",
+                        {"$type": "rotate_object_to",  # will not change object pivot position
                          "id": o_id,
                          "rotation": p.object_rotation}]
-            # TODO: make sure the position and rotation used during image rendering is the same as the positions and rotations used during occlusion estimation
-            # as rotate_object_to last might change object position set before.
 
             # Set the visual materials.
             if self.materials:
@@ -864,21 +862,21 @@ class ImageDataset(Controller):
                 "id": o_id,
                 "angle": RNG.uniform(-30, 30),
                 "axis": "pitch",
-                "use_centroid": True,
+                "use_centroid": True,  # will change object pivot position
                 },
                 {
                 "$type": "rotate_object_by",
                 "id": o_id,
                 "angle": RNG.uniform(-30, 30),
                 "axis": "yaw",
-                "use_centroid": True,
+                "use_centroid": True,  # will change object pivot position
                 },
                 {
                 "$type": "rotate_object_by",
                 "id": o_id,
                 "angle": RNG.uniform(-30, 30),
                 "axis": "roll",
-                "use_centroid": True,
+                "use_centroid": True,  # will change object pivot position
                 },
             ])
         else:
@@ -894,7 +892,7 @@ class ImageDataset(Controller):
                 },
             ])
 
-        # Rotate the camera.
+        # Rotate the camera, all of these will not change avator position
         commands.extend([
             {"$type": "look_at",
              "object_id": o_id,
