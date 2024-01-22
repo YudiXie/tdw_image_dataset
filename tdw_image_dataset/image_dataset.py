@@ -858,6 +858,7 @@ class ImageDataset(Controller):
 
         # Rotate the object. 
         # If we're clamping the rotation, rotate the object within +/- rot_range degrees on each axis.
+        # all of these will not change object poviot position
         if self.clamp_rotation:
             rot_range = 45
             commands.extend([
