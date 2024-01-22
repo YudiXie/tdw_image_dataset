@@ -578,9 +578,10 @@ class ImageDataset(Controller):
                 o_init_transforms = Transforms(resp[i])
                 assert o_init_transforms.get_num() == 1, "object transform should only have one object"
         
+        o_init_rot = o_init_transforms.get_rotation(0)
         # Cache the initial rotation of the object.
         if record.name not in self.initial_rotations:
-            self.initial_rotations[record.name] = TDWUtils.array_to_vector4(o_init_transforms.get_rotation(0))
+            self.initial_rotations[record.name] = TDWUtils.array_to_vector4(o_init_rot)
         
         # The index in the HDRI records array.
         self.skybox_idx = 0
