@@ -629,15 +629,21 @@ class ImageDataset(Controller):
             # Rotate the object.
             # Get the response.
             commands = [{"$type": "teleport_avatar_to",
-                         "position": p.avatar_position},
+                         "position": p.avatar_position,
+                         "avatar_id": ImageDataset.AVATAR_ID,
+                         },
                         {"$type": "rotate_sensor_container_to",  # will not change avator position
-                         "rotation": p.camera_rotation},
+                         "rotation": p.camera_rotation,
+                         "avatar_id": ImageDataset.AVATAR_ID,
+                         },
                         {"$type": "teleport_object",
                          "id": o_id,
-                         "position": p.object_position},
+                         "position": p.object_position,
+                         },
                         {"$type": "rotate_object_to",  # will not change object pivot position
                          "id": o_id,
-                         "rotation": p.object_rotation}]
+                         "rotation": p.object_rotation,
+                         },]
 
             # Set the visual materials.
             if self.materials:
@@ -697,10 +703,12 @@ class ImageDataset(Controller):
                   "position_ids": [0],
                   "positions": [TDWUtils.array_to_vector3(object_bounds.get_center(0))]},
                  {"$type": "parent_object_to_avatar",
-                  "id": o_id, "avatar_id": ImageDataset.AVATAR_ID, 
+                  "id": o_id,
+                  "avatar_id": ImageDataset.AVATAR_ID, 
                   "sensor": True},
                  {"$type": "send_local_transforms", 
-                  "ids": [o_id], "frequency": "once"},
+                  "ids": [o_id], 
+                  "frequency": "once"},
                   ])
             
             # unparent the object, to ensure object don't move when the avatar moves
@@ -853,6 +861,7 @@ class ImageDataset(Controller):
                      },
                     {"$type": "teleport_avatar_to",
                      "position": TDWUtils.array_to_vector3(a_p),
+                     "avatar_id": ImageDataset.AVATAR_ID,
                      },
                      ]
 
@@ -914,14 +923,17 @@ class ImageDataset(Controller):
             {"$type": "look_at",
              "object_id": o_id,
              "use_centroid": True,
+             "avatar_id": ImageDataset.AVATAR_ID,
              },
             {"$type": "rotate_sensor_container_by",
              "angle": RNG.uniform(-cam_rot_range, cam_rot_range),
              "axis": "pitch",
+             "avatar_id": ImageDataset.AVATAR_ID,
              },
             {"$type": "rotate_sensor_container_by",
              "angle": RNG.uniform(-cam_rot_range, cam_rot_range),
              "axis": "yaw",
+             "avatar_id": ImageDataset.AVATAR_ID,
              },
             ])
         
