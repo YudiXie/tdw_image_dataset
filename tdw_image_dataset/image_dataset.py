@@ -572,12 +572,15 @@ class ImageDataset(Controller):
         resp = self.communicate(self.get_object_initialization_commands(record=record, o_id=o_id))
         
         o_init_transforms = None
+        has_tran = False
         for i in range(len(resp) - 1):
             r_id = OutputData.get_data_type_id(resp[i])
             if r_id == "tran":
                 o_init_transforms = Transforms(resp[i])
                 assert o_init_transforms.get_num() == 1, "object transform should only have one object"
+                has_tran = True
         
+        assert has_tran, "object transform not found"
         o_init_rot = o_init_transforms.get_rotation(0)
         # Cache the initial rotation of the object.
         if record.name not in self.initial_rotations:
