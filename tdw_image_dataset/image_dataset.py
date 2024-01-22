@@ -697,6 +697,8 @@ class ImageDataset(Controller):
                 r_id = OutputData.get_data_type_id(img_resp[i])
                 if r_id == "boun":
                     object_bounds = Bounds(img_resp[i])
+                    assert object_bounds.get_num() == 1, "object bounds should only have one object"
+            object_center_pos = TDWUtils.array_to_vector3(object_bounds.get_center(0))
 
             # instruct the build to send screen position of the object
             # the position is likely the bottom center of the object
@@ -704,7 +706,7 @@ class ImageDataset(Controller):
             resp = self.communicate(
                 [{"$type": "send_screen_positions",
                   "position_ids": [0],
-                  "positions": [TDWUtils.array_to_vector3(object_bounds.get_center(0))]},
+                  "positions": [object_center_pos, ]},
                  {"$type": "parent_object_to_avatar",
                   "id": o_id,
                   "avatar_id": ImageDataset.AVATAR_ID, 
