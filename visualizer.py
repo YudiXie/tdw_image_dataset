@@ -35,10 +35,16 @@ def show_image_and_meta(dset_path, index_row):
     print(f"scene: {scene_n}, wind: {wnid}")
     print(f"model: {model_n}")
     print(f'skybox: {img_meta["skybox_name"]}')
-    print(f'screen_x: {img_meta["ty"]:.2f}, screen_y: {img_meta["tz"]:.2f}')
-    print(f'screen_x_frac: {(img_meta["ty"] / width + 0.5):.2f}, screen_y_frac: {(img_meta["tz"] / height + 0.5):.2f}')
-    print(f'distance: {img_meta["neg_x"]:.2f}')
-    print(f'Eular angles: {img_meta["euler_1"]:.2f}, {img_meta["euler_2"]:.2f}, {img_meta["euler_3"]:.2f}')
+
+    print(f'screen_pos_x: {img_meta["ty"]:.2f}, screen_pos_y: {img_meta["tz"]:.2f}')
+    print(f'screen_pos_x_frac: {(img_meta["ty"] / width + 0.5):.2f}, screen_pos_y_frac: {(img_meta["tz"] / height + 0.5):.2f}')
+    print(f'screen_distance: {img_meta["neg_x"]:.2f}')
+    print(f'relative Eular angles: {img_meta["euler_1"]:.2f}, {img_meta["euler_2"]:.2f}, {img_meta["euler_3"]:.2f}')
+
+    print(f'object positions: x: {img_meta["object_pos_x"]:.2f}, y: {img_meta["object_pos_y"]:.2f}, z: {img_meta["object_pos_z"]:.2f}')
+    print(f'object rotations: x: {img_meta["object_rot_x"]:.2f}, y: {img_meta["object_rot_y"]:.2f}, z: {img_meta["object_rot_z"]:.2f}, w: {img_meta["object_rot_w"]:.2f}')
+    print(f'avator positions: x: {img_meta["avatar_pos_x"]:.2f}, y: {img_meta["avatar_pos_y"]:.2f}, z: {img_meta["avatar_pos_z"]:.2f}')
+    print(f'camera rotations: x: {img_meta["camera_rot_x"]:.2f}, y: {img_meta["camera_rot_y"]:.2f}, z: {img_meta["camera_rot_z"]:.2f}, w: {img_meta["camera_rot_w"]:.2f}')
 
     fig, ax = plt.subplots()
     ax.imshow(img)
