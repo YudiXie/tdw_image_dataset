@@ -138,7 +138,7 @@ class ImageDataset(Controller):
                  show_objects: bool = True,
                  clamp_rotation: bool = True,
                  max_height: float = 0.5,
-                 occlusion: float = 0.45,
+                 occl_filter_th: float = 0.3,
                  less_dark: bool = True,
                  exterior_only: bool = True,
                  id_pass: bool = False,
@@ -161,7 +161,7 @@ class ImageDataset(Controller):
         :param show_objects: If True, show objects.
         :param clamp_rotation: If true, clamp the rotation to +/- 30 degrees around each axis.
         :param max_height: The percentage of the environment height that is the ceiling for the avatar and object. Must be between 0 and 1.
-        :param occlusion: The occlusion threshold. Lower value = slower FPS, better composition. Must be between 0 and 1.
+        :param occl_filter_th: The occlusion filtering threshold. Lower value = slower FPS, better composition. Must be between 0 and 1.
         :param less_dark: If True, there will be more daylight exterior skyboxes (requires hdri == True)
         :param exterior_only: If True, only use exterior skyboxes (requires hdri == True)
         :param id_pass: If True, send and save the _id pass.
@@ -227,7 +227,7 @@ class ImageDataset(Controller):
         """:field
         The occlusion threshold. Lower value = slower FPS, better composition. Must be between 0 and 1.
         """
-        self.occlusion: float = occlusion
+        self.occl_filter_th: float = occl_filter_th
         """:field
         If True, send and save the _id pass.
         """
@@ -242,7 +242,7 @@ class ImageDataset(Controller):
         self.scene_list = scene_list
 
         assert 0 < max_height <= 1.0, f"Invalid max height: {max_height}"
-        assert 0 < occlusion <= 1.0, f"Invalid occlusion threshold: {occlusion}"
+        assert 0 < occl_filter_th <= 1.0, f"Invalid occlusion threshold: {occl_filter_th}"
 
         """:field
         If True, there will be more daylight exterior skyboxes (requires hdri == True)
@@ -387,7 +387,7 @@ class ImageDataset(Controller):
                 "clamp_rotation": self.clamp_rotation,
                 "show_objects": self.show_objects,
                 "max_height": self.max_height,
-                "occlusion": self.occlusion,
+                "occl_filter_th": self.occl_filter_th,
                 "less_dark": self.less_dark,
                 "exterior_only": self.exterior_only,
                 "start": datetime.now().strftime("%H:%M %d.%m.%y")}
@@ -599,7 +599,7 @@ class ImageDataset(Controller):
             room: RegionBounds = scene_bounds.regions[RNG.randint(0, len(scene_bounds.regions))]
             # Get the occlusion.
             occlusion, image_position = self.get_occlusion(record.name, o_id, room)
-            if occlusion < self.occlusion:
+            if occlusion < self.occl_filter_th:
                 image_positions.append(image_position)
         # Send images.
         # Set the screen size.
