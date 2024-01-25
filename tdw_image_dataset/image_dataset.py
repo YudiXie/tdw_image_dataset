@@ -107,6 +107,13 @@ class ImageDataset(Controller):
         'ty', # horizontal position of object, in pixels, center of image is 0, + is going right
         'tz', # vertical position of object, in pixels, center of image is 0, + is going up
         'neg_x', # depth of object, unit in 3D space in TDW
+        'rel_pos_x',
+        'rel_pos_y',
+        'rel_pos_z',
+        'rel_rot_x',
+        'rel_rot_y',
+        'rel_rot_z',
+        'rel_rot_w',
         'euler_1',
         'euler_2',
         'euler_3',
@@ -731,6 +738,8 @@ class ImageDataset(Controller):
                     has_ltra = True
                     obj_ltransforms = LocalTransforms(resp[i])
                     assert obj_ltransforms.get_id(0) == o_id, "object id mismatch"
+                    relative_position = obj_ltransforms.get_position(0)
+                    relative_rotation = obj_ltransforms.get_rotation(0)
                     # get the rotation of the object in the screen space
                     relative_euler = obj_ltransforms.get_euler_angles(0)
             assert has_scre and has_ltra, "missing screen position or local transform"
@@ -745,6 +754,13 @@ class ImageDataset(Controller):
                 ty,
                 tz,
                 neg_x,
+                relative_position[0],
+                relative_position[1],
+                relative_position[2],
+                relative_rotation[0],
+                relative_rotation[1],
+                relative_rotation[2],
+                relative_rotation[3],
                 relative_euler[0],
                 relative_euler[1],
                 relative_euler[2],
