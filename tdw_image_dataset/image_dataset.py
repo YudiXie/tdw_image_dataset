@@ -598,8 +598,9 @@ class ImageDataset(Controller):
             # Get a random "room".
             room: RegionBounds = scene_bounds.regions[RNG.randint(0, len(scene_bounds.regions))]
             # Get the occlusion.
-            occlusion, image_position = self.get_occlusion(record.name, o_id, room)
-            if occlusion < self.occl_filter_th:
+            v_occl, v_unoccl, image_position = self.get_occlusion(record.name, o_id, room)
+            occl_frac = 1 - v_occl / (v_unoccl + 0.001)  # fraction of the object occluded by scenes
+            if (occl_frac < self.occl_filter_th) and (v_occl > 2):
                 image_positions.append(image_position)
         # Send images.
         # Set the screen size.
@@ -941,6 +942,7 @@ class ImageDataset(Controller):
         
         # Request output data.
         commands.extend([{"$type": "send_occlusion",
+                          "ids": [ImageDataset.AVATAR_ID, ],
                           "frequency": "once"},
                          {"$type": "send_image_sensors",
                           "frequency": "once"},
@@ -953,7 +955,7 @@ class ImageDataset(Controller):
         # 1. The occlusion value of the image.
         # 2. The camera rotation.
         # 3. The object position and rotation.
-        occlusion: float = 1.0
+        occl = None
         # a_p is not changed so we don't need to update it
         cam_rot = None
         o_rot = None
@@ -962,7 +964,9 @@ class ImageDataset(Controller):
         for i in range(len(resp) - 1):
             r_id = OutputData.get_data_type_id(resp[i])
             if r_id == "occl":
-                occlusion = Occlusion(resp[i]).get_occluded()
+                occl = Occlusion(resp[i])
+                v_occluded = occl.get_occluded()
+                v_unoccluded = occl.get_unoccluded()
                 has_occl = True
             elif r_id == "imse":
                 img_sen = ImageSensors(resp[i])
@@ -977,10 +981,10 @@ class ImageDataset(Controller):
                 o_p = TDWUtils.array_to_vector3(transforms.get_position(0))
                 has_tran = True
         assert has_occl and has_imse and has_tran, "missing occlusion, image sensor or transform"
-        return occlusion, ImagePosition(avatar_position=TDWUtils.array_to_vector3(a_p),
-                                        object_position=o_p,
-                                        object_rotation=o_rot,
-                                        camera_rotation=cam_rot)
+        return v_occluded, v_unoccluded, ImagePosition(avatar_position=TDWUtils.array_to_vector3(a_p),
+                                                       object_position=o_p,
+                                                       object_rotation=o_rot,
+                                                       camera_rotation=cam_rot)
 
     @staticmethod
     def zip_images(output_directory: Path) -> None:
