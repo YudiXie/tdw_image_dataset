@@ -35,13 +35,15 @@ def sample_spherical(npoints=1, ndim=3) -> np.array:
     return np.array([vec[0][0], vec[1][0], vec[2][0]])
 
 
-def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0) -> np.array:
+def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0, scene_name: str = '') -> np.array:
     """
     :param region: The scene region bounds.
     :param offset: Restrict the agent from offset to the edge of the region.
 
     :return: The position of the avatar and object for the next image as a numpy array.
     """
+    y_min = 0.4
+
     if offset > 0.0:
         assert region.x_max - region.x_min > 2 * offset, "region x too small"
         x_min = region.x_min + offset
@@ -50,14 +52,20 @@ def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0) -> 
         z_min = region.z_min + offset
         z_max = region.z_max - offset
         assert region.y_max > 0.4 + offset, "region y too small"
-        y_max = region.y_max - offset
-        avatar_p = np.array([RNG.uniform(x_min, x_max),
-                             RNG.uniform(0.4, y_max),
-                             RNG.uniform(z_min, z_max)])
+        y_max = region.y_max - offset        
     else:
-        avatar_p = np.array([RNG.uniform(region.x_min, region.x_max),
-                             RNG.uniform(0.4, region.y_max),
-                             RNG.uniform(region.z_min, region.z_max)])
+        x_min, x_max = region.x_min, region.x_max
+        z_min, z_max = region.z_min, region.z_max
+        y_max = region.y_max
+    
+    if scene_name == 'savanna_flat_6km':
+        # this scene is too big, need to clamp y range
+        y_max = 10.0
+        y_min = 5.0
+    
+    avatar_p = np.array([RNG.uniform(x_min, x_max),
+                         RNG.uniform(y_min, y_max),
+                         RNG.uniform(z_min, z_max)])
     
     resample_ct = 0
     resample_num = 50
@@ -602,7 +610,7 @@ class ImageDataset(Controller):
             # Get a random "room".
             room: RegionBounds = scene_bounds.regions[RNG.randint(0, len(scene_bounds.regions))]
             # Get the occlusion.
-            v_occl, v_unoccl, image_position = self.get_occlusion(record.name, o_id, room)
+            v_occl, v_unoccl, image_position = self.get_occlusion(o_id, room)
             occl_frac = 1 - v_occl / (v_unoccl + 0.001)  # fraction of the object occluded by scenes
             if (occl_frac < self.occl_filter_th) and (v_occl > 2):
                 image_positions.append(image_position)
@@ -813,19 +821,16 @@ class ImageDataset(Controller):
                                  output_directory=output_directory,
                                  resize_to=self.output_size)
 
-    def get_occlusion(self, o_name: str, o_id: int, region: RegionBounds) -> Tuple[float, ImagePosition]:
+    def get_occlusion(self, o_id: int, region: RegionBounds) -> Tuple[int, int, ImagePosition]:
         """
         Get the "real" grayscale value of an image we hope to capture.
 
-        :param o_name: The name of the object.
         :param o_id: The ID of the object.
         :param region: The scene region bounds.
-
-        :return: (grayscale, distance, avatar_position, object_position, object_rotation, avatar_rotation)
         """
 
         # Get a random position for the avatar.
-        a_p, o_p = sample_avatar_object_position(region, self.offset)
+        a_p, o_p = sample_avatar_object_position(region, self.offset, self.current_scene)
 
         commands = [{"$type": "teleport_object",
                      "id": o_id,
