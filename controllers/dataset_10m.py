@@ -21,13 +21,18 @@ if __name__ == "__main__":
     else:
         output_dir = Path.home().joinpath(dataset_folder)
 
+    # 10 scenes, 8 outdoors, 2 indoors
     scenes = [
+              "box_room_2018",
               "building_site",
-              "lava_field",
-              "iceland_beach",
-              "ruin",
               "dead_grotto",
-              "suburb_scene_2018",
+              "downtown_alleys", # has 6 sub regions, okay with 0.5 offset, rendered from within the building, too noisy
+              "iceland_beach",
+              "lava_field",
+              "ruin",
+              "savanna_flat_6km",
+              "suburb_scene_2023", # has 1 sub region, okay with 0.5 offset, sometimes render from within the building, slow to load
+              "tdw_room",
               ]
     
     c = ImageDataset(
