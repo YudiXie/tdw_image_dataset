@@ -799,7 +799,7 @@ class ImageDataset(Controller):
         # Save the image.
         filename = f"{image_index:010d}"
         
-        # assert len(save_tuple) == len(self.IMG_META_HEADERS), "save tuple length mismatch"
+        assert len(save_tuple) == len(self.IMG_META_HEADERS), "save tuple length mismatch"
         save_dict = {k: [v, ] for k, v in zip(self.IMG_META_HEADERS, save_tuple)}
         csv_path = output_directory.joinpath("img_" + filename + "_info.csv")
         pd.DataFrame.from_dict(save_dict).to_csv(csv_path, header=False, index=False)
