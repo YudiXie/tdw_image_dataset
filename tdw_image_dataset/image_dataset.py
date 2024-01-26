@@ -49,9 +49,8 @@ def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0) -> 
         assert region.z_max - region.z_min > 2 * offset, "region z too small"
         z_min = region.z_min + offset
         z_max = region.z_max - offset
-        # assert region.y_max > 0.4 + offset, "region y too small"
-        # y_max = region.y_max - offset
-        y_max = region.y_max
+        assert region.y_max > 0.4 + offset, "region y too small"
+        y_max = region.y_max - offset
         avatar_p = np.array([RNG.uniform(x_min, x_max),
                              RNG.uniform(0.4, y_max),
                              RNG.uniform(z_min, z_max)])
@@ -151,7 +150,7 @@ class ImageDataset(Controller):
                  library: str = "models_core.json",
                  random_seed: int = 0,
                  subset_wnids: Optional[List[str]] = None,
-                 offset: float = 0.0,
+                 offset: float = 0.3,
                  scene_list = ['building_site', ],
                  ):
         """
