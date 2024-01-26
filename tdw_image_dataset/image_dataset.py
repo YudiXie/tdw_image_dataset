@@ -889,6 +889,15 @@ class ImageDataset(Controller):
                              "w": RNG.uniform(-360, 360)},
                 },
             ])
+        
+        # after rotating, set the object's centroid to the sampled position
+        commands.extend([
+            {"$type": "teleport_object",
+            "id": o_id,
+            "position": TDWUtils.array_to_vector3(o_p),
+            "use_centroid": True,
+            },
+        ])
 
         # Rotate the camera, all of these will not change avator position
         cam_rot_range = 20
