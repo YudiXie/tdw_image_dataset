@@ -13,11 +13,12 @@ import pandas as pd
 from tqdm import tqdm
 from tdw.controller import Controller
 from tdw.tdw_utils import TDWUtils
-from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version, ScreenPosition, LocalTransforms, Bounds
+from tdw.output_data import OutputData, Occlusion, Images, ImageSensors, Transforms, Version
 from tdw.librarian import ModelLibrarian, MaterialLibrarian, HDRISkyboxLibrarian, ModelRecord, HDRISkyboxRecord
 from tdw.scene_data.scene_bounds import SceneBounds
 from tdw.scene_data.region_bounds import RegionBounds
 from tdw_image_dataset.image_position import ImagePosition
+from tdw.quaternion_utils import QuaternionUtils
 
 # The required version of TDW.
 REQUIRED_TDW_VERSION: str = "1.9.0"
@@ -104,19 +105,16 @@ class ImageDataset(Controller):
         'record_name',
         'image_file_name',
         'skybox_name',
-        'ty', # horizontal position of object, in pixels, center of image is 0, + is going right
-        'tz', # vertical position of object, in pixels, center of image is 0, + is going up
-        'neg_x', # depth of object, unit in 3D space in TDW
-        'rel_pos_x',
-        'rel_pos_y',
-        'rel_pos_z',
-        'rel_rot_x',
+        'rel_pos_x', # left-right position of object in camera reference frame, center of image is 0, + is going right, unit in 3D space in TDW
+        'rel_pos_y', # up-down position of object in camera reference frame, center of image is 0, + is going up, unit in 3D space in TDW
+        'rel_pos_z', # distance of object, camera is 0, + is going into the image, unit in 3D space in TDW
+        'rel_rot_x', # rotation quaternion of object in camera reference frame
         'rel_rot_y',
         'rel_rot_z',
         'rel_rot_w',
-        'euler_1',
-        'euler_2',
-        'euler_3',
+        'rel_rot_euler_0', # rotation euler angles of object in camera reference frame
+        'rel_rot_euler_1',
+        'rel_rot_euler_2',
         'avatar_pos_x',
         'avatar_pos_y',
         'avatar_pos_z',
@@ -692,57 +690,16 @@ class ImageDataset(Controller):
                     self.skybox_idx += 1
                     if self.skybox_idx >= len(self.skyboxes):
                         self.skybox_idx = 0
-            
-            commands.append({"$type": "send_bounds", "ids": [o_id, ]})
 
             img_resp = self.communicate(commands)
 
-            object_bounds = None
-            for i in range(len(img_resp) - 1):
-                r_id = OutputData.get_data_type_id(img_resp[i])
-                if r_id == "boun":
-                    object_bounds = Bounds(img_resp[i])
-                    assert object_bounds.get_num() == 1, "object bounds should only have one object"
-            object_center_pos = TDWUtils.array_to_vector3(object_bounds.get_center(0))
-
-            # instruct the build to send screen position of the object
-            # the position is likely the bottom center of the object
-            # parent the object to the avatar, and send rotation of the object relative to the camera
-            resp = self.communicate(
-                [{"$type": "send_screen_positions",
-                  "position_ids": [0],
-                  "positions": [object_center_pos, ]},
-                 {"$type": "parent_object_to_avatar",
-                  "id": o_id,
-                  "avatar_id": ImageDataset.AVATAR_ID, 
-                  "sensor": True},
-                 {"$type": "send_local_transforms", 
-                  "ids": [o_id], 
-                  "frequency": "once"},
-                  ])
-            
-            # unparent the object, to ensure object don't move when the avatar moves
-            self.communicate([{"$type": "unparent_object", "id": o_id},])
-
-            has_scre, has_ltra = False, False
-            # get the screen position of the object
-            for i in range(len(resp) - 1):
-                r_id = OutputData.get_data_type_id(resp[i])
-                if r_id == "scre":
-                    has_scre = True
-                    scene_positions = ScreenPosition(resp[i])
-                    ty, tz, neg_x = scene_positions.get_screen()
-                    ty -= self.screen_width / 2
-                    tz -= self.screen_height / 2
-                if r_id == "ltra":
-                    has_ltra = True
-                    obj_ltransforms = LocalTransforms(resp[i])
-                    assert obj_ltransforms.get_id(0) == o_id, "object id mismatch"
-                    relative_position = obj_ltransforms.get_position(0)
-                    relative_rotation = obj_ltransforms.get_rotation(0)
-                    # get the rotation of the object in the screen space
-                    relative_euler = obj_ltransforms.get_euler_angles(0)
-            assert has_scre and has_ltra, "missing screen position or local transform"
+            # get the relative position and rotation of the object in camera reference frame
+            rel_pos = QuaternionUtils.world_to_local_vector(TDWUtils.vector3_to_array(p.object_position),
+                                                            TDWUtils.vector3_to_array(p.avatar_position),
+                                                            TDWUtils.vector4_to_array(p.camera_rotation))
+            rel_rot = QuaternionUtils.multiply(QuaternionUtils.get_inverse(TDWUtils.vector4_to_array(p.camera_rotation)),
+                                               TDWUtils.vector4_to_array(p.object_rotation))
+            rel_rot_euler = QuaternionUtils.quaternion_to_euler_angles(rel_rot)
 
             save_tuple = (
                 self.current_scene,
@@ -751,19 +708,16 @@ class ImageDataset(Controller):
                 record.name,
                 f"img_{image_index:010d}",
                 skybox_name,
-                ty,
-                tz,
-                neg_x,
-                relative_position[0],
-                relative_position[1],
-                relative_position[2],
-                relative_rotation[0],
-                relative_rotation[1],
-                relative_rotation[2],
-                relative_rotation[3],
-                relative_euler[0],
-                relative_euler[1],
-                relative_euler[2],
+                rel_pos[0],
+                rel_pos[1],
+                rel_pos[2],
+                rel_rot[0],
+                rel_rot[1],
+                rel_rot[2],
+                rel_rot[3],
+                rel_rot_euler[0],
+                rel_rot_euler[1],
+                rel_rot_euler[2],
                 p.avatar_position['x'],
                 p.avatar_position['y'],
                 p.avatar_position['z'],
