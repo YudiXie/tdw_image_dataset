@@ -35,6 +35,14 @@ def sample_spherical(npoints=1, ndim=3) -> np.array:
     return np.array([vec[0][0], vec[1][0], vec[2][0]])
 
 
+def sample_spherical_cap(y_min=-0.2):
+    while True:
+        vec = sample_spherical()
+        if vec[1] > y_min:
+            break
+    return vec
+
+
 def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0, scene_name: str = '') -> np.array:
     """
     :param scene_bounds: The scene bounds.
@@ -75,11 +83,9 @@ def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0
     while resample_ct < resample_num:
         # Get a random distance from the avatar.
         distance = RNG.uniform(0.9, 4.2)
-        # Get a random position for the object constrained to the environment bounds.
-        object_p = sample_spherical() * distance
-        # only sample object higher than the avatar
-        object_p[1] = abs(object_p[1])
-        object_p = avatar_p + object_p
+        # Get a random position for the object, not too low, and constrained to the environment bounds.
+        object_offset = sample_spherical_cap() * distance
+        object_p = avatar_p + object_offset
         if object_p[1] < region.y_max:
             break
         resample_ct += 1
