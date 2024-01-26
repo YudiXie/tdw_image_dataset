@@ -79,7 +79,7 @@ def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0
                          RNG.uniform(z_min, z_max)])
     
     resample_ct = 0
-    resample_num = 50
+    resample_num = 15
     while resample_ct < resample_num:
         # Get a random distance from the avatar.
         distance = RNG.uniform(0.9, 4.2)
@@ -89,10 +89,6 @@ def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0
         if object_p[1] < region.y_max:
             break
         resample_ct += 1
-    
-    # Clamp the y value of the object if we've resampled too many times.
-    if resample_ct >= resample_num:
-        object_p[1] = region.y_max
 
     return avatar_p, object_p
 
