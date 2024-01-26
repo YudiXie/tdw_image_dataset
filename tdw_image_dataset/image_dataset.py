@@ -35,13 +35,16 @@ def sample_spherical(npoints=1, ndim=3) -> np.array:
     return np.array([vec[0][0], vec[1][0], vec[2][0]])
 
 
-def sample_avatar_object_position(region: RegionBounds, offset: float = 0.0, scene_name: str = '') -> np.array:
+def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0, scene_name: str = '') -> np.array:
     """
-    :param region: The scene region bounds.
+    :param scene_bounds: The scene bounds.
     :param offset: Restrict the agent from offset to the edge of the region.
 
     :return: The position of the avatar and object for the next image as a numpy array.
     """
+    # Get a random region within the scene.
+    region: RegionBounds = scene_bounds.regions[RNG.randint(0, len(scene_bounds.regions))]
+    
     y_min = 0.4
 
     if offset > 0.0:
@@ -607,10 +610,8 @@ class ImageDataset(Controller):
                 self.imgs_per_skybox = 1
 
         while len(image_positions) < img_count_per_model:
-            # Get a random "room".
-            room: RegionBounds = scene_bounds.regions[RNG.randint(0, len(scene_bounds.regions))]
-            # Get the occlusion.
-            v_occl, v_unoccl, image_position = self.get_occlusion(o_id, room)
+            # sample configureation and get the occlusion values
+            v_occl, v_unoccl, image_position = self.sample_configuration(o_id, scene_bounds)
             occl_frac = 1 - v_occl / (v_unoccl + 0.001)  # fraction of the object occluded by scenes
             if (occl_frac < self.occl_filter_th) and (v_occl > 2):
                 image_positions.append(image_position)
@@ -821,16 +822,15 @@ class ImageDataset(Controller):
                                  output_directory=output_directory,
                                  resize_to=self.output_size)
 
-    def get_occlusion(self, o_id: int, region: RegionBounds) -> Tuple[int, int, ImagePosition]:
+    def sample_configuration(self, o_id: int, scene_bounds: SceneBounds) -> Tuple[int, int, ImagePosition]:
         """
-        Get the "real" grayscale value of an image we hope to capture.
+        Sample a configuration for object positioin, rotation, camera position and rotation
 
         :param o_id: The ID of the object.
-        :param region: The scene region bounds.
+        :param scene_bounds: The scene bounds to sample from.
         """
-
         # Get a random position for the avatar.
-        a_p, o_p = sample_avatar_object_position(region, self.offset, self.current_scene)
+        a_p, o_p = sample_avatar_object_position(scene_bounds, self.offset, self.current_scene)
 
         commands = [{"$type": "teleport_object",
                      "id": o_id,
