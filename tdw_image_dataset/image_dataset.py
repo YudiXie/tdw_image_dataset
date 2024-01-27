@@ -716,8 +716,8 @@ class ImageDataset(Controller):
 
             img_resp = self.communicate(commands)
 
-            # get the relative position and rotation of the object in camera reference frame
-            rel_pos = QuaternionUtils.world_to_local_vector(TDWUtils.vector3_to_array(p.object_position),
+            # get the relative position and rotation of the object center in camera reference frame
+            rel_pos = QuaternionUtils.world_to_local_vector(TDWUtils.vector3_to_array(p.object_center_position),
                                                             TDWUtils.vector3_to_array(p.avatar_position),
                                                             TDWUtils.vector4_to_array(p.camera_rotation))
             rel_rot = QuaternionUtils.multiply(QuaternionUtils.get_inverse(TDWUtils.vector4_to_array(p.camera_rotation)),
@@ -748,9 +748,9 @@ class ImageDataset(Controller):
                 p.camera_rotation['y'],
                 p.camera_rotation['z'],
                 p.camera_rotation['w'],
-                p.object_position['x'],
-                p.object_position['y'],
-                p.object_position['z'],
+                p.object_center_position['x'],
+                p.object_center_position['y'],
+                p.object_center_position['z'],
                 p.object_rotation['x'],
                 p.object_rotation['y'],
                 p.object_rotation['z'],
@@ -845,14 +845,16 @@ class ImageDataset(Controller):
         :param scene_bounds: The scene bounds to sample from.
         """
         # Get a random position for the avatar.
-        a_p, o_p = sample_avatar_object_position(scene_bounds, self.offset, self.current_scene)
+        a_p, o_center_p = sample_avatar_object_position(scene_bounds, self.offset, self.current_scene)
+        a_p = TDWUtils.array_to_vector3(a_p)
+        o_center_p = TDWUtils.array_to_vector3(o_center_p)
 
         commands = [{"$type": "teleport_object",
                      "id": o_id,
-                     "position": TDWUtils.array_to_vector3(o_p),
+                     "position": o_center_p,
                      },
                     {"$type": "teleport_avatar_to",
-                     "position": TDWUtils.array_to_vector3(a_p),
+                     "position": a_p,
                      "avatar_id": ImageDataset.AVATAR_ID,
                      },
                      ]
@@ -871,7 +873,7 @@ class ImageDataset(Controller):
                 # },
                 {
                 "$type": "object_look_at_position",
-                "position": TDWUtils.array_to_vector3(a_p),
+                "position": a_p,
                 "id": o_id,
                 },
                 {
@@ -913,7 +915,7 @@ class ImageDataset(Controller):
         commands.extend([
             {"$type": "teleport_object",
             "id": o_id,
-            "position": TDWUtils.array_to_vector3(o_p),
+            "position": o_center_p,
             "use_centroid": True,
             },
         ])
@@ -979,10 +981,11 @@ class ImageDataset(Controller):
                 o_p = TDWUtils.array_to_vector3(transforms.get_position(0))
                 has_tran = True
         assert has_occl and has_imse and has_tran, "missing occlusion, image sensor or transform"
-        return v_occluded, v_unoccluded, ImagePosition(avatar_position=TDWUtils.array_to_vector3(a_p),
+        return v_occluded, v_unoccluded, ImagePosition(avatar_position=a_p,
                                                        object_position=o_p,
                                                        object_rotation=o_rot,
-                                                       camera_rotation=cam_rot)
+                                                       camera_rotation=cam_rot,
+                                                       object_center_position=o_center_p)
 
     @staticmethod
     def zip_images(output_directory: Path) -> None:
