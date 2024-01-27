@@ -31,7 +31,7 @@ if __name__ == "__main__":
               "lava_field",
               "ruin",
               "savanna_flat_6km",
-              "suburb_scene_2023", # has 1 sub region, okay with 0.5 offset, sometimes render from within the building, slow to load
+              "suburb_scene_2023",
               "tdw_room",
               ]
     

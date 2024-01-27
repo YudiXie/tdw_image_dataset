@@ -73,6 +73,10 @@ def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0
         # this scene is too big, need to clamp y range
         y_max = 10.0
         y_min = 5.0
+    elif scene_name == 'suburb_scene_2023':
+        assert len(scene_bounds.regions) == 1, "suburb_scene_2023 only one region"
+        x_min, x_max = -68.0, 68.0
+        z_min, z_max = -11.0, 11.0
     
     avatar_p = np.array([RNG.uniform(x_min, x_max),
                          RNG.uniform(y_min, y_max),
