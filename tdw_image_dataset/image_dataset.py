@@ -68,15 +68,21 @@ def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0
         x_min, x_max = region.x_min, region.x_max
         z_min, z_max = region.z_min, region.z_max
         y_max = region.y_max
+
+    obj_ymax = region.y_max
     
     if scene_name == 'savanna_flat_6km':
         # this scene is too big, need to clamp y range
-        y_max = 10.0
-        y_min = 5.0
+        y_min, y_max = 5.0, 10.0
+        obj_ymax = 15.0
     elif scene_name == 'suburb_scene_2023':
-        assert len(scene_bounds.regions) == 1, "suburb_scene_2023 only one region"
         x_min, x_max = -68.0, 68.0
         z_min, z_max = -11.0, 11.0
+    elif scene_name == 'downtown_alleys':
+        x_min, x_max = 29.0, 33.0
+        z_min, z_max = -15.0, 8.0
+        y_min, y_max = 2.0, 5.0
+        obj_ymax = 7.0
     
     avatar_p = np.array([RNG.uniform(x_min, x_max),
                          RNG.uniform(y_min, y_max),
@@ -90,7 +96,7 @@ def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0
         # Get a random position for the object, not too low, and constrained to the environment bounds.
         object_offset = sample_spherical_cap() * distance
         object_p = avatar_p + object_offset
-        if object_p[1] < region.y_max:
+        if object_p[1] < obj_ymax:
             break
         resample_ct += 1
 

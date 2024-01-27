@@ -26,7 +26,7 @@ if __name__ == "__main__":
               "box_room_2018",
               "building_site",
               "dead_grotto",
-              "downtown_alleys", # has 6 sub regions, okay with 0.5 offset, rendered from within the building, too noisy
+              "downtown_alleys",
               "iceland_beach",
               "lava_field",
               "ruin",
