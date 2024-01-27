@@ -166,7 +166,7 @@ class ImageDataset(Controller):
                  show_objects: bool = True,
                  clamp_rotation: bool = True,
                  max_height: float = 0.5,
-                 occl_filter_th: float = 0.3,
+                 occl_filter_th: float = 0.2,
                  less_dark: bool = True,
                  exterior_only: bool = True,
                  id_pass: bool = False,
