@@ -128,9 +128,9 @@ class ImageDataset(Controller):
         'record_name',
         'image_file_name',
         'skybox_name',
-        'rel_pos_x', # left-right position of object in camera reference frame, center of image is 0, + is going right, unit in 3D space in TDW
-        'rel_pos_y', # up-down position of object in camera reference frame, center of image is 0, + is going up, unit in 3D space in TDW
-        'rel_pos_z', # distance of object, camera is 0, + is going into the image, unit in 3D space in TDW
+        'rel_pos_x', # left-right position of object center in camera reference frame, center of image is 0, + is going right, unit in 3D space in TDW
+        'rel_pos_y', # up-down position of object center in camera reference frame, center of image is 0, + is going up, unit in 3D space in TDW
+        'rel_pos_z', # distance of object center, camera is 0, + is going into the image, unit in 3D space in TDW
         'rel_rot_x', # rotation quaternion of object in camera reference frame
         'rel_rot_y',
         'rel_rot_z',
@@ -145,7 +145,7 @@ class ImageDataset(Controller):
         'camera_rot_y',
         'camera_rot_z',
         'camera_rot_w',
-        'object_pos_x',
+        'object_pos_x', # object center position in world space
         'object_pos_y',
         'object_pos_z',
         'object_rot_x',
