@@ -14,5 +14,5 @@ conda install pandas
 pip install tdw
 
 cd tdw_image_dataset
-pip install -e .
+python generate_dataset.py -n tdw5k
 ```
