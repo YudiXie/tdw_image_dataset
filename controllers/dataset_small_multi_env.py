@@ -32,14 +32,19 @@ if __name__ == "__main__":
         'n04379243', # ‘table’, 20 records
         'n04461879', # ‘toy’, 12 records
     ]
-
+    
+    # 10 scenes, 8 outdoors, 2 indoors
     scenes = [
+              "box_room_2018",
               "building_site",
-              "lava_field",
-              "iceland_beach",
-              "ruin",
               "dead_grotto",
-              "suburb_scene_2018",
+              "downtown_alleys",
+              "iceland_beach",
+              "lava_field",
+              "ruin",
+              "savanna_flat_6km",
+              "suburb_scene_2023",
+              "tdw_room",
               ]
     
     c = ImageDataset(
