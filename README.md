@@ -2,7 +2,7 @@
 
 Generate a dataset of synthetic images using [TDW](https://github.com/threedworld-mit/tdw).
 
-The main difference between this repo and https://github.com/alters-mit/tdw_image_dataset is that this repo logs rich ground-truth information about the latent variables during the image generation process. The latent variables include object distance, rotations, and translation related to the camera.
+This repo is based on Esther Alter's repo https://github.com/alters-mit/tdw_image_dataset. The main difference is that this repo logs rich ground-truth information about the latent variables during the image generation process. The latent variables include object distance, rotations, and translation related to the camera. Additionally, the sampling of object positions and poses, and test of occluded objects are adjusted.
 
 ## Install
 ```
