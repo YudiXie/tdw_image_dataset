@@ -1,4 +1,5 @@
 import os
+import shutil
 from secrets import token_urlsafe
 from pathlib import Path
 import json
@@ -478,7 +479,7 @@ class ImageDataset(Controller):
         resp = self.communicate(commands)
         return SceneBounds(resp)
 
-    def generate_multi_scene(self, do_zip=False) -> None:
+    def generate_multi_scene(self, do_zip=True) -> None:
 
         done_scenes_path: Path = self.output_directory.joinpath(f"processed_scenes.txt")
         processed_scenes_names: List[str] = []
@@ -493,6 +494,11 @@ class ImageDataset(Controller):
 
             print(f"Generating: {scene_n}\t{i + 1}/{num_scene}")
             self.generate_single_scene(scene_name=scene_n)
+
+            if do_zip:
+                scene_path = self.images_directory.joinpath(scene_n)
+                shutil.make_archive(scene_path, 'zip', scene_path) # below python 3.10.6, maynot be thread-safe
+                shutil.rmtree(scene_path.resolve())
             
             # Mark this scene as processed.
             with done_scenes_path.open("at", encoding="utf-8") as f:
