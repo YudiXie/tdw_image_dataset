@@ -2,12 +2,6 @@ import argparse
 from pathlib import Path
 from tdw_image_dataset.image_dataset import ImageDataset
 
-"""
-Generate a dataset that is of same size as the HvM dataset
-around 4608 training iamges and 1152 testing images
-only have 8 categories
-multiple scenes
-"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -16,6 +10,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.name == 'tdw5k':
+        """
+        Generate a dataset that is of same size as the HvM dataset
+        around 4608 training iamges and 1152 testing images
+        only have 8 categories
+        multiple scenes
+        """
+
         dataset_folder = "tdw_image_dataset_5k"
         num_img_total = 4608 + 1152
         subset_ids = [
@@ -28,6 +29,19 @@ if __name__ == "__main__":
             'n04379243', # ‘table’, 20 records
             'n04461879', # ‘toy’, 12 records
         ]
+    
+    elif args.name == 'tdw1m':
+        """
+        Generate a dataset that is of same size Imagenet
+        around 1,300,000 training images and 50,000 testing images
+        that have all categories
+        multiple scenes
+        """
+
+        dataset_folder = "tdw_image_dataset_1m"
+        num_img_total = 1300000 + 50000
+        subset_ids = None
+        
     else:
         raise NotImplementedError("Unknown dataset name")
     
@@ -54,8 +68,8 @@ if __name__ == "__main__":
         num_img_total=num_img_total,
         output_directory=output_dir,
         materials=False,
-        launch_build=True, # for local machine
-        subset_wnids=subset_ids, # only 8 categories
+        launch_build=True,
+        subset_wnids=subset_ids,
         cene_list=scenes,
         )
 
