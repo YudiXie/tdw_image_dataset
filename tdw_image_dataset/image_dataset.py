@@ -500,9 +500,6 @@ class ImageDataset(Controller):
         
         self.communicate({"$type": "terminate"})
 
-        # Zip the images.
-        if do_zip:
-            ImageDataset.zip_images(self.output_directory)
 
     def generate_single_scene(self, scene_name: str) -> None:
         """
