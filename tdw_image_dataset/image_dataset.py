@@ -486,17 +486,17 @@ class ImageDataset(Controller):
             processed_scenes_names = done_scenes_path.read_text(encoding="utf-8").split("\n")
         
         num_scene = len(self.scene_list)
-        for scene, i in zip(self.scene_list, range(num_scene)):
-            if scene in processed_scenes_names:
-                print(f"Scene: {scene} already processed, skip")
+        for i, scene_n in enumerate(self.scene_list):
+            if scene_n in processed_scenes_names:
+                print(f"Scene: {scene_n} already processed, skip")
                 continue
 
-            print(f"Generating: {scene}\t{i + 1}/{num_scene}")
-            self.generate_single_scene(scene_name=scene)
+            print(f"Generating: {scene_n}\t{i + 1}/{num_scene}")
+            self.generate_single_scene(scene_name=scene_n)
             
             # Mark this scene as processed.
             with done_scenes_path.open("at", encoding="utf-8") as f:
-                f.write(f"\n{scene}")
+                f.write(f"\n{scene_n}")
         
         self.communicate({"$type": "terminate"})
 
