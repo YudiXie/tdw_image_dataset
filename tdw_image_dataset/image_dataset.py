@@ -156,7 +156,7 @@ class ImageDataset(Controller):
     def __init__(self,
                  output_directory: Union[str, Path],
                  port: int = 1071,
-                 launch_build: bool = False,
+                 launch_build: bool = True,
                  materials: bool = False,
                  screen_width: int = 256,
                  screen_height: int = 256,

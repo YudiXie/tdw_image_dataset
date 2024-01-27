@@ -78,10 +78,8 @@ if __name__ == "__main__":
     c = ImageDataset(
         num_img_total=num_img_total,
         output_directory=output_dir,
-        materials=False,
-        launch_build=True,
         subset_wnids=subset_ids,
-        cene_list=scenes,
+        scene_list=scenes,
         )
 
     c.generate_multi_scene()
