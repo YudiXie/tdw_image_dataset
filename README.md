@@ -20,6 +20,10 @@ python generate_dataset.py -n tdw5k
 ## Usage
 Check mission images in a dataset:
 
+```bash
+python check_missing.py --index /om/user/yu_xie/data/tdw_images/tdw_image_dataset_1m/index_img_1349370.csv
+```
+
 Unzip images
 ```bash
 python unzip_images.py -d /om/user/yu_xie/data/tdw_images/tdw_image_dataset_1m -n box_room_2018 building_site dead_grotto downtown_alleys iceland_beach lava_field ruin savanna_flat_6km suburb_scene_2023 tdw_room
