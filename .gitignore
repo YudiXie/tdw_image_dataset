@@ -10,3 +10,5 @@ __pycache__/
 
 *.ipynb
 .vscode/
+shscripts/
+slurm_output/
