@@ -118,7 +118,6 @@ class ImageDataset(Controller):
     AVATAR_ID: str = "a"
     EXCLUDE_MODELS = [
         'b02_bag', 'lantern_2010', 'b04_bottle_max', # models that have multiple objects are removed
-        'heart', 'shark', # models that have wrong pivot points are removed
         ]
     # The headers of the metadata file.
     IMG_META_HEADERS = (
