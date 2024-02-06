@@ -641,7 +641,14 @@ class ImageDataset(Controller):
         # Send images.
         # Set the screen size.
         # Set render quality to maximum.
-        commands = [{"$type": "send_images",
+        commands = [{"$type": "send_transforms",
+                     "frequency": "never"},
+                    {"$type": "send_occlusion",
+                     "ids": [ImageDataset.AVATAR_ID, ],
+                     "frequency": "never"},
+                    {"$type": "send_image_sensors",
+                     "frequency": "never"},
+                    {"$type": "send_images",
                      "frequency": "always"},
                     {"$type": "set_pass_masks",
                      "pass_masks": ["_img", "_id"] if self.id_pass else ["_img"]},
@@ -815,7 +822,14 @@ class ImageDataset(Controller):
                 {"$type": "scale_object",
                  "id": o_id,
                  "scale_factor": {"x": s, "y": s, "z": s}},
-                {"$type": "send_transforms"}]
+                {"$type": "send_transforms",
+                 "frequency": "always"},
+                {"$type": "send_occlusion",
+                 "ids": [ImageDataset.AVATAR_ID, ],
+                 "frequency": "always"},
+                {"$type": "send_image_sensors",
+                 "frequency": "always"},
+                 ]
 
     def save_image(self, resp, save_tuple: tuple, output_directory: Path, image_index: int) -> None:
         """
@@ -948,14 +962,6 @@ class ImageDataset(Controller):
              },
             ])
         
-        # Request output data.
-        commands.extend([{"$type": "send_occlusion",
-                          "ids": [ImageDataset.AVATAR_ID, ],
-                          "frequency": "once"},
-                         {"$type": "send_image_sensors",
-                          "frequency": "once"},
-                         {"$type": "send_transforms",
-                          "frequency": "once"}])
         # Send the commands.
         resp = self.communicate(commands)
 
