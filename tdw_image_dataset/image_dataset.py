@@ -565,7 +565,7 @@ class ImageDataset(Controller):
             # Process each record.
             for record, i in zip(records, range(len(records))):
                 # Set the progress bar description to the wnid and FPS.
-                pbar.set_description(f"record {i + 1}/{len(records)}, running FPS {fps}")
+                pbar.set_description(f"record {i + 1}/{len(records)}, running FPS {fps:.1f}")
 
                 # Skip models that have already been processed.
                 if record.name in processed_model_names:
