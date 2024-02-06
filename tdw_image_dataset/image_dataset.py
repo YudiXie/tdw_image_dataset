@@ -544,6 +544,7 @@ class ImageDataset(Controller):
         if done_models_path.exists():
             processed_model_names = done_models_path.read_text(encoding="utf-8").split("\n")
 
+        fps = 0.0
         # Iterate through each wnid.
         for w in self.wnids:
             # Update the progress bar.
@@ -554,17 +555,17 @@ class ImageDataset(Controller):
             records = self.wnid2models[w]
 
             # Process each record.
-            fps = "nan"
             for record, i in zip(records, range(len(records))):
                 # Set the progress bar description to the wnid and FPS.
-                pbar.set_description(f"record {i + 1}/{len(records)}, FPS {fps}")
+                pbar.set_description(f"record {i + 1}/{len(records)}, running FPS {fps}")
 
                 # Skip models that have already been processed.
                 if record.name in processed_model_names:
                     continue
 
                 # Create all of the images for this model.
-                fps = self.process_model(record, scene_bounds, w)
+                new_fps = self.process_model(record, scene_bounds, w)
+                fps = 0.8 * fps + 0.2 * new_fps
 
                 # Mark this record as processed.
                 with done_models_path.open("at", encoding="utf-8") as f:
