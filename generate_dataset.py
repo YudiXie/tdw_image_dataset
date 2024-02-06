@@ -6,6 +6,7 @@ from tdw_image_dataset.image_dataset import ImageDataset
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--name', default='', help='name of the dataset')
+    parser.add_argument('-s', '--scenes', nargs='+', default=[], help='names of the scenes to generate')
     parser.add_argument('-d', '--directory', default='', help='the directory to save the dataset to')
     args = parser.parse_args()
 
@@ -80,6 +81,7 @@ if __name__ == "__main__":
         output_directory=output_dir,
         subset_wnids=subset_ids,
         scene_list=scenes,
+        scene_to_generate=args.scenes,
         )
 
     c.generate_multi_scene()

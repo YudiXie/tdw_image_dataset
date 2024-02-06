@@ -176,6 +176,7 @@ class ImageDataset(Controller):
                  subset_wnids: Optional[List[str]] = None,
                  offset: float = 0.3,
                  scene_list = ['building_site', ],
+                 scene_to_generate = [],
                  ):
         """
         :param output_directory: The path to the root output directory.
@@ -200,6 +201,8 @@ class ImageDataset(Controller):
         :param random_seed: The random seed.
         :param subset_wnids: create a subset only use these wnid categories.
         :param offset: Restrict the agent from offset to the edge of the region.
+        :param scene_list: list of scene names in the full dataset
+        :param scene_to_generate: list of scene names to generate on this call, if empty, generate all scenes
         """
 
         global RNG
@@ -268,6 +271,12 @@ class ImageDataset(Controller):
         self.subset_wnids = subset_wnids
         self.current_scene = ''
         self.scene_list = scene_list
+        if scene_to_generate:
+            assert all([s in self.scene_list for s in scene_to_generate]), "scene_to_generate should be subset of scene_list"
+            self.scene_to_generate = scene_to_generate
+        else:
+            # if not provided, generate all scenes
+            self.scene_to_generate = scene_list
 
         assert 0 < max_height <= 1.0, f"Invalid max height: {max_height}"
         assert 0 < occl_filter_th <= 1.0, f"Invalid occlusion threshold: {occl_filter_th}"
@@ -486,8 +495,8 @@ class ImageDataset(Controller):
         if done_scenes_path.exists():
             processed_scenes_names = done_scenes_path.read_text(encoding="utf-8").split("\n")
         
-        num_scene = len(self.scene_list)
-        for i, scene_n in enumerate(self.scene_list):
+        num_scene = len(self.scene_to_generate)
+        for i, scene_n in enumerate(self.scene_to_generate):
             if scene_n in processed_scenes_names:
                 print(f"Scene: {scene_n} already processed, skip")
                 continue
@@ -568,7 +577,6 @@ class ImageDataset(Controller):
         metadata = json.loads(self.metadata_path.read_text(encoding="utf-8"))
         end_time = datetime.now().strftime("%H:%M %d.%m.%y")
         metadata.update({"end": end_time})
-        metadata['scene_list'].append(self.current_scene)
         self.metadata_path.write_text(json.dumps(metadata, sort_keys=True, indent=4), encoding="utf-8")
 
         # Don't need to unload the scene here since loading a new scene 
