@@ -44,6 +44,22 @@ def sample_spherical_cap(y_min=-0.2):
     return vec
 
 
+def check_scene_bounds(scene_bounds: SceneBounds, offset: float = 0.0) -> None:
+    """
+    Check the scene bounds to ensure that the scene is compatible with the offset.
+
+    :param scene_bounds: The scene bounds.
+    """
+    assert len(scene_bounds.regions) > 0, "No regions in the scene."
+    assert offset >= 0.0, "Invalid offset"
+
+    y_min = 0.4
+    for region in scene_bounds.regions:
+        assert region.x_max - region.x_min > 2 * offset, "region x too small"
+        assert region.z_max - region.z_min > 2 * offset, "region z too small"
+        assert region.y_max - offset > y_min, "region y too small"
+
+
 def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0, scene_name: str = '') -> np.array:
     """
     :param scene_bounds: The scene bounds.
@@ -53,22 +69,13 @@ def sample_avatar_object_position(scene_bounds: SceneBounds, offset: float = 0.0
     """
     # Get a random region within the scene.
     region: RegionBounds = scene_bounds.regions[RNG.randint(0, len(scene_bounds.regions))]
-    
-    y_min = 0.4
 
-    if offset > 0.0:
-        assert region.x_max - region.x_min > 2 * offset, "region x too small"
-        x_min = region.x_min + offset
-        x_max = region.x_max - offset
-        assert region.z_max - region.z_min > 2 * offset, "region z too small"
-        z_min = region.z_min + offset
-        z_max = region.z_max - offset
-        assert region.y_max > 0.4 + offset, "region y too small"
-        y_max = region.y_max - offset        
-    else:
-        x_min, x_max = region.x_min, region.x_max
-        z_min, z_max = region.z_min, region.z_max
-        y_max = region.y_max
+    x_min = region.x_min + offset
+    x_max = region.x_max - offset
+    z_min = region.z_min + offset
+    z_max = region.z_max - offset
+    y_min = 0.4
+    y_max = region.y_max - offset
 
     obj_ymax = region.y_max
     
@@ -534,6 +541,7 @@ class ImageDataset(Controller):
 
         # Initialize the scene.
         scene_bounds: SceneBounds = self.initialize_scene(scene_name)
+        check_scene_bounds(scene_bounds, self.offset)
 
         # Create the progress bar.
         pbar = tqdm(total=len(self.wnids))
