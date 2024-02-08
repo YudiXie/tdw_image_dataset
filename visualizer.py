@@ -19,21 +19,23 @@ def load_image(image_filepath):
             rgb_image.paste(pil_image)
             return rgb_image
 
-
-def show_image_and_meta(dset_path, index_row):
+def load_image_and_meta(dset_path, index_row):
     image_idx, scene_n, wnid, model_n = index_row['image_index'], index_row['scene'], index_row['wnid'], index_row['model']
     headers = dset_path.joinpath('img_meta_headers.txt').read_text(encoding="utf-8").split("\n")
     img_path = dset_path.joinpath('images', scene_n, wnid, model_n, f"img_{image_idx:010d}.jpg")
     img_meta_path = dset_path.joinpath('images', scene_n, wnid, model_n, f"img_{image_idx:010d}_info.csv")
 
     img_meta = pd.read_csv(img_meta_path, names=headers).iloc[0]
-
     img = load_image(img_path)
-    width, height = img.size
+    return image_idx, img, img_meta
 
-    print(f"image_idx: {image_idx}")
-    print(f"scene: {scene_n}, wind: {wnid}")
-    print(f"model: {model_n}")
+
+def show_image_and_meta(img, img_meta):
+    width, height = img.size
+    
+    print(f"scene: {img_meta['scene_name']}, wind: {img_meta['wnid']}")
+    print(f'category: {img_meta["record_wcategory"]}')
+    print(f"model: {img_meta['record_name']}")
     print(f'skybox: {img_meta["skybox_name"]}')
 
     print(f'screen_pos_x: {img_meta["rel_pos_x"]:.2f}, screen_pos_y: {img_meta["rel_pos_y"]:.2f}')
