@@ -36,10 +36,9 @@ def show_image_and_meta(dset_path, index_row):
     print(f"model: {model_n}")
     print(f'skybox: {img_meta["skybox_name"]}')
 
-    print(f'screen_pos_x: {img_meta["ty"]:.2f}, screen_pos_y: {img_meta["tz"]:.2f}')
-    print(f'screen_pos_x_frac: {(img_meta["ty"] / width + 0.5):.2f}, screen_pos_y_frac: {(img_meta["tz"] / height + 0.5):.2f}')
-    print(f'screen_distance: {img_meta["neg_x"]:.2f}')
-    print(f'relative Eular angles: {img_meta["euler_1"]:.2f}, {img_meta["euler_2"]:.2f}, {img_meta["euler_3"]:.2f}')
+    print(f'screen_pos_x: {img_meta["rel_pos_x"]:.2f}, screen_pos_y: {img_meta["rel_pos_y"]:.2f}')
+    print(f'screen_distance: {img_meta["rel_pos_z"]:.2f}')
+    print(f'relative Eular angles: {img_meta["rel_rot_euler_0"]:.2f}, {img_meta["rel_rot_euler_1"]:.2f}, {img_meta["rel_rot_euler_2"]:.2f}')
 
     print(f'object positions: x: {img_meta["object_pos_x"]:.2f}, y: {img_meta["object_pos_y"]:.2f}, z: {img_meta["object_pos_z"]:.2f}')
     print(f'object rotations: x: {img_meta["object_rot_x"]:.2f}, y: {img_meta["object_rot_y"]:.2f}, z: {img_meta["object_rot_z"]:.2f}, w: {img_meta["object_rot_w"]:.2f}')
@@ -48,6 +47,7 @@ def show_image_and_meta(dset_path, index_row):
 
     fig, ax = plt.subplots()
     ax.imshow(img)
-    ax.scatter(width // 2 + img_meta['ty'],
-               height // 2 - img_meta['tz'],
+    scale_factor = 200 / img_meta["rel_pos_z"]  # 200 is just a guess now
+    ax.scatter(width // 2 + img_meta['rel_pos_x'] * scale_factor,
+               height // 2 - img_meta['rel_pos_y'] * scale_factor,
                s=50, c='r', marker='x', label='positions')
