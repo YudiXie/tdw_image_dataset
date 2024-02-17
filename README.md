@@ -18,7 +18,12 @@ python generate_dataset.py -n tdw5k
 ```
 
 ## Usage
-Check mission images in a dataset:
+Generate selected scences in a dataset
+```bash
+python generate_dataset.py -n tdw100m -d C:/tdw_images -s downtown_alleys savanna_flat_6km
+```
+
+Check missing images in a dataset:
 
 ```bash
 python check_missing.py --index /om/user/yu_xie/data/tdw_images/tdw_image_dataset_1m/index_img_1349370.csv
