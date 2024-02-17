@@ -53,7 +53,18 @@ if __name__ == "__main__":
         dataset_folder = "tdw_image_dataset_10m"
         num_img_total = 10000000 + 100000
         subset_ids = None
-        
+
+    elif args.name == 'tdw100m':
+        """
+        Generate a dataset that have around 100M images, 100M for training, 100K for testing
+        that have all categories
+        multiple scenes
+        """
+
+        dataset_folder = "tdw_image_dataset_100m"
+        num_img_total = 100000000 + 100000
+        subset_ids = None
+
     else:
         raise NotImplementedError("Unknown dataset name")
     
