@@ -35,8 +35,8 @@ if __name__ == '__main__':
     for idx in trange(len(full_df)):
         row = full_df.iloc[idx]
         image_folder = dataset_path.joinpath('images', row['scene'], row['wnid'], row['model'])
-        image_path = image_folder.joinpath(f'img_{idx:010d}.jpg')
-        image_meta_path = image_folder.joinpath(f'img_{idx:010d}_info.csv')
+        image_path = image_folder.joinpath(f'img_{row.name:010d}.jpg')
+        image_meta_path = image_folder.joinpath(f'img_{row.name:010d}_info.csv')
 
         # Check if the image file and the image meta file exists
         if not image_path.is_file() or not image_meta_path.is_file():
