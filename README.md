@@ -12,12 +12,14 @@ conda create -n tdw python=3.9
 conda activate tdw
 conda install pandas tqdm
 pip install tdw
-
-cd tdw_image_dataset
-python generate_dataset.py -n tdw5k
 ```
 
 ## Usage
+Generate all scences in a dataset
+```bash
+python generate_dataset.py -n tdw5k -d C:/tdw_images
+```
+
 Generate selected scences in a dataset
 ```bash
 python generate_dataset.py -n tdw100m -d C:/tdw_images -s downtown_alleys savanna_flat_6km
