@@ -55,6 +55,18 @@ if __name__ == "__main__":
         num_img_total = 1300000 + 50000
         subset_ids = ['n03001627', ]  # 'chair’, 25 records
     
+    elif args.name == 'tdw1m_1c_n02774152':
+        """
+        Generate a dataset that is of same size Imagenet
+        around 1,300,000 training images and 50,000 testing images
+        that only have 1 category: 'n02774152' (bag)
+        multiple scenes
+        """
+
+        dataset_folder = "tdw_image_dataset_1m_1c_n02774152"
+        num_img_total = 1300000 + 50000
+        subset_ids = ['n02774152', ]  # 'chair’, 25 records
+    
     elif args.name == 'tdw10m':
         """
         Generate a dataset that have around 10M images, 10M for training, 100K for testing
