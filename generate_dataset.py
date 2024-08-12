@@ -30,6 +30,7 @@ if __name__ == "__main__":
             'n04379243', # ‘table’, 20 records
             'n04461879', # ‘toy’, 12 records
         ]
+        cam_rot_range = 20.0
     
     elif args.name == 'tdw1m':
         """
@@ -42,6 +43,7 @@ if __name__ == "__main__":
         dataset_folder = "tdw_image_dataset_1m"
         num_img_total = 1300000 + 50000
         subset_ids = None
+        cam_rot_range = 20.0
     
     elif args.name == 'tdw1m_1c_n03001627':
         """
@@ -54,6 +56,7 @@ if __name__ == "__main__":
         dataset_folder = "tdw_image_dataset_1m_1c_n03001627"
         num_img_total = 1300000 + 50000
         subset_ids = ['n03001627', ]  # 'chair’, 25 records
+        cam_rot_range = 20.0
     
     elif args.name == 'tdw1m_1c_n02774152':
         """
@@ -66,6 +69,21 @@ if __name__ == "__main__":
         dataset_folder = "tdw_image_dataset_1m_1c_n02774152"
         num_img_total = 1300000 + 50000
         subset_ids = ['n02774152', ]  # 'bag, handbag, pocketbook, purse’, 12 records
+        cam_rot_range = 20.0
+    
+    elif args.name == 'tdw1m_obj_centered':
+        """
+        Generate a dataset that is of same size Imagenet
+        around 1,300,000 training images and 50,000 testing images
+        that have all categories
+        multiple scenes
+        objects are centered in the generated images
+        """
+
+        dataset_folder = "tdw_image_dataset_1m_obj_centered"
+        num_img_total = 1300000 + 50000
+        subset_ids = None
+        cam_rot_range = 0.01
     
     elif args.name == 'tdw10m':
         """
@@ -77,6 +95,7 @@ if __name__ == "__main__":
         dataset_folder = "tdw_image_dataset_10m"
         num_img_total = 10000000 + 100000
         subset_ids = None
+        cam_rot_range = 20.0
 
     elif args.name == 'tdw100m':
         """
@@ -88,6 +107,7 @@ if __name__ == "__main__":
         dataset_folder = "tdw_image_dataset_100m"
         num_img_total = 100000000 + 100000
         subset_ids = None
+        cam_rot_range = 20.0
 
     else:
         raise NotImplementedError("Unknown dataset name")
@@ -117,6 +137,7 @@ if __name__ == "__main__":
         subset_wnids=subset_ids,
         scene_list=scenes,
         scene_to_generate=args.scenes,
+        cam_rot_range=cam_rot_range,
         )
 
     c.generate_multi_scene()
