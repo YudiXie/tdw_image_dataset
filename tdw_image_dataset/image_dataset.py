@@ -183,6 +183,7 @@ class ImageDataset(Controller):
                  offset: float = 0.3,
                  scene_list = ['building_site', ],
                  scene_to_generate = [],
+                 cam_rot_range: float = 20.0,
                  ):
         """
         :param output_directory: The path to the root output directory.
@@ -209,6 +210,7 @@ class ImageDataset(Controller):
         :param offset: Restrict the agent from offset to the edge of the region.
         :param scene_list: list of scene names in the full dataset
         :param scene_to_generate: list of scene names to generate on this call, if empty, generate all scenes
+        :param cam_rot_range: The range of camera rotation when sampling images, in degrees.
         """
 
         global RNG
@@ -273,6 +275,8 @@ class ImageDataset(Controller):
         Restrict the agent from offset to the edge of the region.
         """
         self.offset = offset
+
+        self.cam_rot_range = cam_rot_range
 
         self.subset_wnids = subset_wnids
         self.current_scene = ''
@@ -951,7 +955,6 @@ class ImageDataset(Controller):
         ])
 
         # Rotate the camera, all of these will not change avator position
-        cam_rot_range = 20
         commands.extend([
             {"$type": "look_at",
              "object_id": o_id,
@@ -959,12 +962,12 @@ class ImageDataset(Controller):
              "avatar_id": ImageDataset.AVATAR_ID,
              },
             {"$type": "rotate_sensor_container_by",
-             "angle": RNG.uniform(-cam_rot_range, cam_rot_range),
+             "angle": RNG.uniform(-self.cam_rot_range, self.cam_rot_range),
              "axis": "pitch",
              "avatar_id": ImageDataset.AVATAR_ID,
              },
             {"$type": "rotate_sensor_container_by",
-             "angle": RNG.uniform(-cam_rot_range, cam_rot_range),
+             "angle": RNG.uniform(-self.cam_rot_range, self.cam_rot_range),
              "axis": "yaw",
              "avatar_id": ImageDataset.AVATAR_ID,
              },
