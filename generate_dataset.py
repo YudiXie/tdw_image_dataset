@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
         dataset_folder = "tdw_image_dataset_1m_1c_n02774152"
         num_img_total = 1300000 + 50000
-        subset_ids = ['n02774152', ]  # 'chair’, 25 records
+        subset_ids = ['n02774152', ]  # 'bag, handbag, pocketbook, purse’, 12 records
     
     elif args.name == 'tdw10m':
         """
