@@ -29,7 +29,7 @@ After gernerating the images, the images are often packed in zip files to ficili
 ```bash
 python unzip_images.py -d /om/user/yu_xie/data/tdw_images/tdw_image_dataset_1m -n box_room_2018 building_site dead_grotto downtown_alleys iceland_beach lava_field ruin savanna_flat_6km suburb_scene_2023 tdw_room
 ```
-Or, the user could use `unzip_scripts` to submit multiple jobs to unzip the folders in parallel in a slurm system.
+Or, the user could use `unzip_scripts` to submit multiple jobs to unzip the folders in parallel in a slurm system. After all scene data is complete, the user can manually add a file `dataset_scene_all_complete.txt` in the dataset folder to indicate the dataset is complete.
 
 After unzipping the datatset, runn the following example command to check whether there are missing images in a dataset (change the index directory to your specific dataset):
 ```bash
