@@ -25,13 +25,12 @@ Generate selected scences in a dataset
 python generate_dataset.py -n tdw100m -d C:/tdw_images -s downtown_alleys savanna_flat_6km
 ```
 
-Unzip images
+After gernerating the images, the images are often packed in zip files to ficilitate file transfer. Unzip images using following commands, change the dataset directory and the scene names to your specific dataset:
 ```bash
 python unzip_images.py -d /om/user/yu_xie/data/tdw_images/tdw_image_dataset_1m -n box_room_2018 building_site dead_grotto downtown_alleys iceland_beach lava_field ruin savanna_flat_6km suburb_scene_2023 tdw_room
 ```
 
-Check missing images in a dataset:
-
+After unzipping the datatset, runn the following example command to check whether there are missing images in a dataset (change the index directory to your specific dataset):
 ```bash
 python check_missing.py --index /om/user/yu_xie/data/tdw_images/tdw_image_dataset_1m/index_img_1349370.csv
 ```
