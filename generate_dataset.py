@@ -65,6 +65,72 @@ if __name__ == "__main__":
         num_img_total = 1300000 + 50000
         subset_ids = ['n02774152', ]  # 'bag, handbag, pocketbook, purse’, 12 records
     
+    elif args.name == 'tdw1m_2c':
+        # 1m dataset with 2 categories
+
+        num_img_total = 1300000 + 50000
+        subset_ids = ['n00104409',
+                      'n00609236',
+                      ]
+    
+    elif args.name == 'tdw1m_4c':
+        # 1m dataset with 4 categories
+
+        num_img_total = 1300000 + 50000
+        subset_ids = ['n00104409',
+                      'n00609236',
+                      'n02206856',
+                      'n02694662',
+                      ]
+    
+    elif args.name == 'tdw1m_6c':
+        # 1m dataset with 6 categories
+
+        num_img_total = 1300000 + 50000
+        subset_ids = ['n00104409',
+                      'n00609236',
+                      'n02206856',
+                      'n02694662',
+                      'n02769748',
+                      'n02773838',
+                      ]
+
+    elif args.name == 'tdw1m_8c':
+        # 1m dataset with 8 categories
+    
+        num_img_total = 1300000 + 50000
+        subset_ids = ['n00104409',
+                      'n00609236',
+                      'n02206856',
+                      'n02694662',
+                      'n02769748',
+                      'n02773838',
+                      'n02774152',
+                      'n02799175',
+                      ]
+    
+    elif args.name == 'tdw1m_16c':
+        # 1m dataset with 16 categories
+
+        num_img_total = 1300000 + 50000
+        subset_ids = ['n00104409',
+                      'n00609236',
+                      'n02206856',
+                      'n02694662',
+                      'n02769748',
+                      'n02773838',
+                      'n02774152',
+                      'n02799175',
+                      'n02801938',
+                      'n02818832',
+                      'n02828884',
+                      'n02870526',
+                      'n02871005',
+                      'n02876657',
+                      'n02883344',
+                      'n02933112',
+                      ]
+    
     elif args.name == 'tdw1m_obj_centered':
         """
         Generate a dataset that is of same size Imagenet
