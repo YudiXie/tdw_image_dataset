@@ -18,7 +18,6 @@ if __name__ == "__main__":
         multiple scenes
         """
 
-        dataset_folder = "tdw_image_dataset_5k"
         num_img_total = 4608 + 1152
         subset_ids = [
             'n02774152', # 'bag, handbag, pocketbook, purse’, 12 records
@@ -40,7 +39,6 @@ if __name__ == "__main__":
         multiple scenes
         """
 
-        dataset_folder = "tdw_image_dataset_1m"
         num_img_total = 1300000 + 50000
         subset_ids = None
         cam_rot_range = 20.0
@@ -53,7 +51,6 @@ if __name__ == "__main__":
         multiple scenes
         """
 
-        dataset_folder = "tdw_image_dataset_1m_1c_n03001627"
         num_img_total = 1300000 + 50000
         subset_ids = ['n03001627', ]  # 'chair’, 25 records
         cam_rot_range = 20.0
@@ -66,7 +63,6 @@ if __name__ == "__main__":
         multiple scenes
         """
 
-        dataset_folder = "tdw_image_dataset_1m_1c_n02774152"
         num_img_total = 1300000 + 50000
         subset_ids = ['n02774152', ]  # 'bag, handbag, pocketbook, purse’, 12 records
         cam_rot_range = 20.0
@@ -80,7 +76,6 @@ if __name__ == "__main__":
         objects are centered in the generated images
         """
 
-        dataset_folder = "tdw_image_dataset_1m_obj_centered"
         num_img_total = 1300000 + 50000
         subset_ids = None
         cam_rot_range = 0.01
@@ -92,7 +87,6 @@ if __name__ == "__main__":
         multiple scenes
         """
 
-        dataset_folder = "tdw_image_dataset_10m"
         num_img_total = 10000000 + 100000
         subset_ids = None
         cam_rot_range = 20.0
@@ -104,7 +98,6 @@ if __name__ == "__main__":
         multiple scenes
         """
 
-        dataset_folder = "tdw_image_dataset_100m"
         num_img_total = 100000000 + 100000
         subset_ids = None
         cam_rot_range = 20.0
@@ -113,9 +106,9 @@ if __name__ == "__main__":
         raise NotImplementedError("Unknown dataset name")
     
     if args.directory != '':
-        output_dir = Path(args.directory).joinpath(dataset_folder)
+        output_dir = Path(args.directory).joinpath(args.name)
     else:
-        output_dir = Path.home().joinpath(dataset_folder)
+        output_dir = Path.home().joinpath(args.name)
     
     # 10 scenes, 8 outdoors, 2 indoors
     scenes = [
