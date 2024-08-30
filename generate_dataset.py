@@ -10,6 +10,9 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--directory', default='', help='the directory to save the dataset to')
     args = parser.parse_args()
 
+    cam_rot_range = 20.0
+    subset_ids = None
+    
     if args.name == 'tdw5k':
         """
         Generate a dataset that is of same size as the HvM dataset
@@ -29,7 +32,6 @@ if __name__ == "__main__":
             'n04379243', # ‘table’, 20 records
             'n04461879', # ‘toy’, 12 records
         ]
-        cam_rot_range = 20.0
     
     elif args.name == 'tdw1m':
         """
@@ -40,8 +42,6 @@ if __name__ == "__main__":
         """
 
         num_img_total = 1300000 + 50000
-        subset_ids = None
-        cam_rot_range = 20.0
     
     elif args.name == 'tdw1m_1c_n03001627':
         """
@@ -53,7 +53,6 @@ if __name__ == "__main__":
 
         num_img_total = 1300000 + 50000
         subset_ids = ['n03001627', ]  # 'chair’, 25 records
-        cam_rot_range = 20.0
     
     elif args.name == 'tdw1m_1c_n02774152':
         """
@@ -65,7 +64,6 @@ if __name__ == "__main__":
 
         num_img_total = 1300000 + 50000
         subset_ids = ['n02774152', ]  # 'bag, handbag, pocketbook, purse’, 12 records
-        cam_rot_range = 20.0
     
     elif args.name == 'tdw1m_obj_centered':
         """
@@ -77,7 +75,6 @@ if __name__ == "__main__":
         """
 
         num_img_total = 1300000 + 50000
-        subset_ids = None
         cam_rot_range = 0.01
     
     elif args.name == 'tdw10m':
@@ -88,8 +85,6 @@ if __name__ == "__main__":
         """
 
         num_img_total = 10000000 + 100000
-        subset_ids = None
-        cam_rot_range = 20.0
 
     elif args.name == 'tdw100m':
         """
@@ -99,8 +94,6 @@ if __name__ == "__main__":
         """
 
         num_img_total = 100000000 + 100000
-        subset_ids = None
-        cam_rot_range = 20.0
 
     else:
         raise NotImplementedError("Unknown dataset name")
